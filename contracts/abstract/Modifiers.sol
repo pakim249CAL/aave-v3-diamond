@@ -21,12 +21,20 @@ abstract contract Modifiers {
     keccak256("ASSET_LISTING_ADMIN");
 
   // STORAGE
-  function s()
-    private
+  function rs()
+    internal
     pure
-    returns (LibStorage.RoleStorage storage rs)
+    returns (LibStorage.RoleStorage storage)
   {
     return LibStorage.roleStorage();
+  }
+
+  function ps()
+    internal
+    pure
+    returns (LibStorage.PoolStorage storage)
+  {
+    return LibStorage.poolStorage();
   }
 
   modifier onlyOwner() {
@@ -187,7 +195,7 @@ abstract contract Modifiers {
     view
     returns (bool)
   {
-    return s().roles[role].members[account];
+    return rs().roles[role].members[account];
   }
 
   function _msgSender()

@@ -68,7 +68,7 @@ library BridgeLogic {
     uint256 amount,
     address onBehalfOf,
     uint16 referralCode
-  ) external {
+  ) internal {
     DataTypes.UserConfigurationMap storage userConfig = ps()
       .usersConfig[onBehalfOf];
     DataTypes.ReserveData storage reserve = ps().reserves[asset];
@@ -127,20 +127,18 @@ library BridgeLogic {
   /**
    * @notice Back the current unbacked with `amount` and pay `fee`.
    * @dev Emits the `BackUnbacked` event
-   * @param reserve The reserve to back unbacked for
    * @param asset The address of the underlying asset to repay
    * @param amount The amount to back
    * @param fee The amount paid in fees
-   * @param protocolFeeBps The fraction of fees in basis points paid to the protocol
    **/
   function executeBackUnbacked(
-    DataTypes.ReserveData storage reserve,
     address asset,
     uint256 amount,
-    uint256 fee,
-    uint256 protocolFeeBps
-  ) external {
+    uint256 fee
+  ) internal {
+    DataTypes.ReserveData storage reserve = ps().reserves[asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
+    uint256 protocolFeeBps = ps().bridgeProtocolFee;
 
     reserve.updateState(reserveCache);
 
