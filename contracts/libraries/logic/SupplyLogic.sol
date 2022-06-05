@@ -191,9 +191,9 @@ library SupplyLogic {
           ps().usersConfig[msg.sender],
           params.asset,
           msg.sender,
-          params.reservesCount,
+          ps().reservesCount,
           params.oracle,
-          params.userEModeCategory
+          ps().usersEModeCategory[msg.sender]
         );
       }
 

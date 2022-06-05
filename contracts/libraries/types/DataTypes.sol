@@ -158,9 +158,7 @@ library DataTypes {
     address asset;
     uint256 amount;
     address to;
-    uint256 reservesCount;
     address oracle;
-    uint8 userEModeCategory;
   }
 
   struct ExecuteSetUserEModeParams {

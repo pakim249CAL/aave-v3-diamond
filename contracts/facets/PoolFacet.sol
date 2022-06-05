@@ -87,9 +87,7 @@ contract PoolFacet is Modifiers {
           asset: asset,
           amount: amount,
           to: to,
-          reservesCount: ps().reservesCount,
-          oracle: address(this), // TODO
-          userEModeCategory: ps().usersEModeCategory[msg.sender]
+          oracle: address(this) // TODO
         })
       );
   }
