@@ -1,0 +1,12 @@
+@contracts/=contracts/
+@interfaces/=contracts/interfaces/
+@libraries/=contracts/libraries/
+@logic/=contracts/libraries/logic/
+@types/=contracts/libraries/types/
+@dependencies/=contracts/libraries/dependencies/
+@diamond/=contracts/diamond/
+@storage/=contracts/libraries/storage/
+@helpers/=contracts/libraries/helpers/
+@configuration/=contracts/libraries/configuration/
+@math/=contracts/libraries/math/
+@abstract/=contracts/abstract/
