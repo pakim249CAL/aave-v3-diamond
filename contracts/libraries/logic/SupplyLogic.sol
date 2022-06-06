@@ -2,17 +2,24 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
-import { IERC20 } from "@interfaces/IERC20.sol";
-import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
-import { IAToken } from "@interfaces/IAToken.sol";
-import { Errors } from "@helpers/Errors.sol";
+
+import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
+
+import { IERC20 } from "@interfaces/IERC20.sol";
+import { IAToken } from "@interfaces/IAToken.sol";
+
+import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
+
+import { Errors } from "@helpers/Errors.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
+
 import { WadRayMath } from "@math/WadRayMath.sol";
 import { PercentageMath } from "@math/PercentageMath.sol";
+
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
-import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 
 /**
  * @title SupplyLogic library
@@ -69,15 +76,11 @@ library SupplyLogic {
   function executeSupply(DataTypes.ExecuteSupplyParams memory params)
     internal
   {
-    mapping(address => DataTypes.ReserveData)
-      storage reservesData = ps().reserves;
-    mapping(uint256 => address) storage reservesList = ps()
-      .reservesList;
-    DataTypes.UserConfigurationMap storage userConfig = ps()
-      .usersConfig[params.onBehalfOf];
-    DataTypes.ReserveData storage reserve = reservesData[
+    DataTypes.ReserveData storage reserve = ps().reserves[
       params.asset
     ];
+    DataTypes.UserConfigurationMap storage userConfig = ps()
+      .usersConfig[params.onBehalfOf];
 
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
@@ -108,8 +111,6 @@ library SupplyLogic {
     if (isFirstSupply) {
       if (
         ValidationLogic.validateUseAsCollateral(
-          reservesData,
-          reservesList,
           userConfig,
           reserveCache.reserveConfiguration
         )
@@ -185,9 +186,6 @@ library SupplyLogic {
     if (userConfig.isUsingAsCollateral(reserve.id)) {
       if (userConfig.isBorrowingAny()) {
         ValidationLogic.validateHFAndLtv(
-          ps().reserves,
-          ps().reservesList,
-          ps().eModeCategories,
           ps().usersConfig[msg.sender],
           params.asset,
           msg.sender,
@@ -222,21 +220,12 @@ library SupplyLogic {
    * @dev Emits the `ReserveUsedAsCollateralEnabled()` event for the `to` account, if the asset is being activated as
    * collateral.
    * @dev In case the `from` user transfers everything, `ReserveUsedAsCollateralDisabled()` is emitted for `from`.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param eModeCategories The configuration of all the efficiency mode categories
-   * @param usersConfig The users configuration mapping that track the supplied/borrowed assets
    * @param params The additional parameters needed to execute the finalizeTransfer function
    */
   function executeFinalizeTransfer(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    mapping(address => DataTypes.UserConfigurationMap)
-      storage usersConfig,
     DataTypes.FinalizeTransferParams memory params
   ) external {
-    DataTypes.ReserveData storage reserve = reservesData[
+    DataTypes.ReserveData storage reserve = ps().reserves[
       params.asset
     ];
 
@@ -245,17 +234,13 @@ library SupplyLogic {
     uint256 reserveId = reserve.id;
 
     if (params.from != params.to && params.amount != 0) {
-      DataTypes.UserConfigurationMap storage fromConfig = usersConfig[
-        params.from
-      ];
+      DataTypes.UserConfigurationMap storage fromConfig = ps()
+        .usersConfig[params.from];
 
       if (fromConfig.isUsingAsCollateral(reserveId)) {
         if (fromConfig.isBorrowingAny()) {
           ValidationLogic.validateHFAndLtv(
-            reservesData,
-            reservesList,
-            eModeCategories,
-            usersConfig[params.from],
+            fromConfig,
             params.asset,
             params.from,
             params.reservesCount,
@@ -273,13 +258,10 @@ library SupplyLogic {
       }
 
       if (params.balanceToBefore == 0) {
-        DataTypes.UserConfigurationMap storage toConfig = usersConfig[
-          params.to
-        ];
+        DataTypes.UserConfigurationMap storage toConfig = ps()
+          .usersConfig[params.to];
         if (
           ValidationLogic.validateUseAsCollateral(
-            reservesData,
-            reservesList,
             toConfig,
             reserve.configuration
           )
@@ -300,9 +282,6 @@ library SupplyLogic {
    * checks to ensure collateralization.
    * @dev Emits the `ReserveUsedAsCollateralEnabled()` event if the asset can be activated as collateral.
    * @dev In case the asset is being deactivated as collateral, `ReserveUsedAsCollateralDisabled()` is emitted.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param eModeCategories The configuration of all the efficiency mode categories
    * @param userConfig The users configuration mapping that track the supplied/borrowed assets
    * @param asset The address of the asset being configured as collateral
    * @param useAsCollateral True if the user wants to set the asset as collateral, false otherwise
@@ -311,9 +290,6 @@ library SupplyLogic {
    * @param userEModeCategory The eMode category chosen by the user
    */
   function executeUseReserveAsCollateral(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap storage userConfig,
     address asset,
     bool useAsCollateral,
@@ -321,7 +297,7 @@ library SupplyLogic {
     address priceOracle,
     uint8 userEModeCategory
   ) external {
-    DataTypes.ReserveData storage reserve = reservesData[asset];
+    DataTypes.ReserveData storage reserve = ps().reserves[asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
     uint256 userBalance = IERC20(reserveCache.aTokenAddress)
@@ -338,8 +314,6 @@ library SupplyLogic {
     if (useAsCollateral) {
       require(
         ValidationLogic.validateUseAsCollateral(
-          reservesData,
-          reservesList,
           userConfig,
           reserveCache.reserveConfiguration
         ),
@@ -351,9 +325,6 @@ library SupplyLogic {
     } else {
       userConfig.setUsingAsCollateral(reserve.id, false);
       ValidationLogic.validateHFAndLtv(
-        reservesData,
-        reservesList,
-        eModeCategories,
         userConfig,
         asset,
         msg.sender,

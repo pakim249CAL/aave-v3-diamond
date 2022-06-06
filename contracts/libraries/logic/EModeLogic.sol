@@ -61,9 +61,6 @@ library EModeLogic {
 
     if (prevCategoryId != 0) {
       ValidationLogic.validateHealthFactor(
-        reservesData,
-        reservesList,
-        eModeCategories,
         userConfig,
         msg.sender,
         params.categoryId,

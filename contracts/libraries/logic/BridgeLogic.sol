@@ -104,8 +104,6 @@ library BridgeLogic {
     if (isFirstSupply) {
       if (
         ValidationLogic.validateUseAsCollateral(
-          ps().reserves,
-          ps().reservesList,
           userConfig,
           reserveCache.reserveConfiguration
         )

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.14;
 
+import { LibStorage } from "@storage/LibStorage.sol";
 import { Errors } from "@helpers/Errors.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
@@ -17,6 +18,14 @@ library UserConfiguration {
     0x5555555555555555555555555555555555555555555555555555555555555555;
   uint256 internal constant COLLATERAL_MASK =
     0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
+
+  function ps()
+    internal
+    pure
+    returns (LibStorage.PoolStorage storage)
+  {
+    return LibStorage.poolStorage();
+  }
 
   /**
    * @notice Sets if the user is borrowing the reserve identified by reserveIndex
@@ -197,16 +206,12 @@ library UserConfiguration {
   /**
    * @notice Returns the Isolation Mode state of the user
    * @param self The configuration object
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
    * @return True if the user is in isolation mode, false otherwise
    * @return The address of the only asset used as collateral
    * @return The debt ceiling of the reserve
    */
   function getIsolationModeState(
-    DataTypes.UserConfigurationMap memory self,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList
+    DataTypes.UserConfigurationMap memory self
   )
     internal
     view
@@ -219,8 +224,9 @@ library UserConfiguration {
     if (isUsingAsCollateralOne(self)) {
       uint256 assetId = _getFirstAssetIdByMask(self, COLLATERAL_MASK);
 
-      address assetAddress = reservesList[assetId];
-      uint256 ceiling = reservesData[assetAddress]
+      address assetAddress = ps().reservesList[assetId];
+      uint256 ceiling = ps()
+        .reserves[assetAddress]
         .configuration
         .getDebtCeiling();
       if (ceiling != 0) {
@@ -233,21 +239,17 @@ library UserConfiguration {
   /**
    * @notice Returns the siloed borrowing state for the user
    * @param self The configuration object
-   * @param reservesData The data of all the reserves
-   * @param reservesList The reserve list
    * @return True if the user has borrowed a siloed asset, false otherwise
    * @return The address of the only borrowed asset
    */
   function getSiloedBorrowingState(
-    DataTypes.UserConfigurationMap memory self,
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList
+    DataTypes.UserConfigurationMap memory self
   ) internal view returns (bool, address) {
     if (isBorrowingOne(self)) {
       uint256 assetId = _getFirstAssetIdByMask(self, BORROWING_MASK);
-      address assetAddress = reservesList[assetId];
+      address assetAddress = ps().reservesList[assetId];
       if (
-        reservesData[assetAddress].configuration.getSiloedBorrowing()
+        ps().reserves[assetAddress].configuration.getSiloedBorrowing()
       ) {
         return (true, assetAddress);
       }

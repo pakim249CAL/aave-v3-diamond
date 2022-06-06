@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.14;
 
+import { LibStorage } from "@storage/LibStorage.sol";
 import { IERC20 } from "@interfaces/IERC20.sol";
 import { IScaledBalanceToken } from "@interfaces/IScaledBalanceToken.sol";
 import { IPriceOracleGetter } from "@interfaces/IPriceOracleGetter.sol";
@@ -23,6 +24,22 @@ library GenericLogic {
   using PercentageMath for uint256;
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
+
+  function ps()
+    internal
+    pure
+    returns (LibStorage.PoolStorage storage)
+  {
+    return LibStorage.poolStorage();
+  }
+
+  function os()
+    internal
+    pure
+    returns (LibStorage.OracleStorage storage)
+  {
+    return LibStorage.oracleStorage();
+  }
 
   struct CalculateUserAccountDataVars {
     uint256 assetPrice;
@@ -50,9 +67,6 @@ library GenericLogic {
    * @notice Calculates the user data across the reserves.
    * @dev It includes the total liquidity/collateral/borrow balances in the base currency used by the price feed,
    * the average Loan To Value, the average Liquidation Ratio, and the Health factor.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param eModeCategories The configuration of all the efficiency mode categories
    * @param params Additional parameters needed for the calculation
    * @return The total collateral of the user in the base currency used by the price feed
    * @return The total debt of the user in the base currency used by the price feed
@@ -62,9 +76,6 @@ library GenericLogic {
    * @return True if the ltv is zero, false otherwise
    **/
   function calculateUserAccountData(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.CalculateUserAccountDataParams memory params
   )
     internal
@@ -90,7 +101,7 @@ library GenericLogic {
         vars.eModeLiqThreshold,
         vars.eModeAssetPrice
       ) = EModeLogic.getEModeConfiguration(
-        eModeCategories[params.userEModeCategory],
+        ps().eModeCategories[params.userEModeCategory],
         IPriceOracleGetter(params.oracle)
       );
     }
@@ -103,7 +114,7 @@ library GenericLogic {
         continue;
       }
 
-      vars.currentReserveAddress = reservesList[vars.i];
+      vars.currentReserveAddress = ps().reservesList[vars.i];
 
       if (vars.currentReserveAddress == address(0)) {
         unchecked {
@@ -112,7 +123,7 @@ library GenericLogic {
         continue;
       }
 
-      DataTypes.ReserveData storage currentReserve = reservesData[
+      DataTypes.ReserveData storage currentReserve = ps().reserves[
         vars.currentReserveAddress
       ];
 
