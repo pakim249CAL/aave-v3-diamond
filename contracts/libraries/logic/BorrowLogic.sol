@@ -208,7 +208,7 @@ library BorrowLogic {
   function executeRepay(
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ExecuteRepayParams memory params
-  ) external returns (uint256) {
+  ) internal returns (uint256) {
     DataTypes.ReserveData storage reserve = ps().reserves[
       params.asset
     ];
@@ -323,7 +323,7 @@ library BorrowLogic {
     DataTypes.ReserveData storage reserve,
     address asset,
     address user
-  ) external {
+  ) internal {
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
     reserve.updateState(reserveCache);
 
@@ -371,7 +371,7 @@ library BorrowLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     address asset,
     DataTypes.InterestRateMode interestRateMode
-  ) external {
+  ) internal {
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
     reserve.updateState(reserveCache);

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.14;
 
+import { LibStorage } from "@storage/LibStorage.sol";
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
 import { IERC20 } from "@interfaces/IERC20.sol";
 import { IPriceOracleGetter } from "@interfaces/IPriceOracleGetter.sol";
@@ -28,36 +29,33 @@ library EModeLogic {
   // See `IPool` for descriptions
   event UserEModeSet(address indexed user, uint8 categoryId);
 
+  function ps()
+    internal
+    pure
+    returns (LibStorage.PoolStorage storage)
+  {
+    return LibStorage.poolStorage();
+  }
+
   /**
    * @notice Updates the user efficiency mode category
    * @dev Will revert if user is borrowing non-compatible asset or change will drop HF < HEALTH_FACTOR_LIQUIDATION_THRESHOLD
    * @dev Emits the `UserEModeSet` event
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param eModeCategories The configuration of all the efficiency mode categories
-   * @param usersEModeCategory The state of all users efficiency mode category
    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param params The additional parameters needed to execute the setUserEMode function
    */
   function executeSetUserEMode(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
-    mapping(address => uint8) storage usersEModeCategory,
     DataTypes.UserConfigurationMap storage userConfig,
     DataTypes.ExecuteSetUserEModeParams memory params
-  ) external {
+  ) internal {
     ValidationLogic.validateSetUserEMode(
-      reservesData,
-      reservesList,
-      eModeCategories,
       userConfig,
       params.reservesCount,
       params.categoryId
     );
 
-    uint8 prevCategoryId = usersEModeCategory[msg.sender];
-    usersEModeCategory[msg.sender] = params.categoryId;
+    uint8 prevCategoryId = ps().usersEModeCategory[msg.sender];
+    ps().usersEModeCategory[msg.sender] = params.categoryId;
 
     if (prevCategoryId != 0) {
       ValidationLogic.validateHealthFactor(

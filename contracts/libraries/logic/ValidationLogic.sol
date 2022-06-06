@@ -785,17 +785,11 @@ library ValidationLogic {
 
   /**
    * @notice Validates the action of setting efficiency mode.
-   * @param reservesData The state of all the reserves
-   * @param reservesList The addresses of all the active reserves
-   * @param eModeCategories a mapping storing configurations for all efficiency mode categories
    * @param userConfig the user configuration
    * @param reservesCount The total number of valid reserves
    * @param categoryId The id of the category
    **/
   function validateSetUserEMode(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
-    mapping(uint256 => address) storage reservesList,
-    mapping(uint8 => DataTypes.EModeCategory) storage eModeCategories,
     DataTypes.UserConfigurationMap memory userConfig,
     uint256 reservesCount,
     uint8 categoryId
@@ -803,7 +797,7 @@ library ValidationLogic {
     // category is invalid if the liq threshold is not set
     require(
       categoryId == 0 ||
-        eModeCategories[categoryId].liquidationThreshold != 0,
+        ps().eModeCategories[categoryId].liquidationThreshold != 0,
       Errors.INCONSISTENT_EMODE_CATEGORY
     );
 
@@ -819,7 +813,8 @@ library ValidationLogic {
         for (uint256 i = 0; i < reservesCount; i++) {
           if (userConfig.isBorrowing(i)) {
             DataTypes.ReserveConfigurationMap
-              memory configuration = reservesData[reservesList[i]]
+              memory configuration = ps()
+                .reserves[ps().reservesList[i]]
                 .configuration;
             require(
               configuration.getEModeCategory() == categoryId,

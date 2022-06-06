@@ -142,7 +142,7 @@ library SupplyLogic {
    */
   function executeWithdraw(
     DataTypes.ExecuteWithdrawParams memory params
-  ) external returns (uint256) {
+  ) internal returns (uint256) {
     DataTypes.UserConfigurationMap storage userConfig = ps()
       .usersConfig[msg.sender];
 
@@ -224,7 +224,7 @@ library SupplyLogic {
    */
   function executeFinalizeTransfer(
     DataTypes.FinalizeTransferParams memory params
-  ) external {
+  ) internal {
     DataTypes.ReserveData storage reserve = ps().reserves[
       params.asset
     ];
@@ -296,7 +296,7 @@ library SupplyLogic {
     uint256 reservesCount,
     address priceOracle,
     uint8 userEModeCategory
-  ) external {
+  ) internal {
     DataTypes.ReserveData storage reserve = ps().reserves[asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
