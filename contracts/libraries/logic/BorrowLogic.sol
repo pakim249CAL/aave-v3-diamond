@@ -84,7 +84,7 @@ library BorrowLogic {
    * @param params The additional parameters needed to execute the borrow function
    */
   function executeBorrow(DataTypes.ExecuteBorrowParams memory params)
-    public
+    internal
   {
     DataTypes.ReserveData storage reserve = ps().reserves[
       params.asset

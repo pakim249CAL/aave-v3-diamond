@@ -38,20 +38,21 @@ library ValidationLogic {
 
   // Factor to apply to "only-variable-debt" liquidity rate to get threshold for rebalancing, expressed in bps
   // A value of 0.9e4 results in 90%
-  uint256 public constant REBALANCE_UP_LIQUIDITY_RATE_THRESHOLD =
+  uint256 internal constant REBALANCE_UP_LIQUIDITY_RATE_THRESHOLD =
     0.9e4;
 
   // Minimum health factor allowed under any circumstance
   // A value of 0.95e18 results in 0.95
   uint256
-    public constant MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD =
+    internal constant MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD =
     0.95e18;
 
   /**
    * @dev Minimum health factor to consider a user position healthy
    * A value of 1e18 results in 1
    */
-  uint256 public constant HEALTH_FACTOR_LIQUIDATION_THRESHOLD = 1e18;
+  uint256 internal constant HEALTH_FACTOR_LIQUIDATION_THRESHOLD =
+    1e18;
 
   function ps()
     internal
