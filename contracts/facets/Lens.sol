@@ -12,7 +12,7 @@ import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
 
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 
-contract LensFacet is Modifiers {
+contract Lens is Modifiers {
   using ReserveLogic for DataTypes.ReserveData;
 
   function getReserveData(address asset)

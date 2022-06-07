@@ -6,7 +6,7 @@ import { Modifiers } from "@abstract/Modifiers.sol";
 
 import { BridgeLogic } from "@logic/BridgeLogic.sol";
 
-contract BridgeFacet is Modifiers {
+contract BridgeEntry is Modifiers {
   function mintUnbacked(
     address asset,
     uint256 amount,

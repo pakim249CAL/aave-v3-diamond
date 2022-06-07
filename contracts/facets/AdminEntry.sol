@@ -15,7 +15,7 @@ import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 
 import { DataTypes } from "@types/DataTypes.sol";
 
-contract AdminFacet is Modifiers {
+contract AdminEntry is Modifiers {
   function mintToTreasury(address[] calldata assets) external {
     PoolLogic.executeMintToTreasury(assets);
   }

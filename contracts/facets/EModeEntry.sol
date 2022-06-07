@@ -8,7 +8,7 @@ import { EModeLogic } from "@logic/EModeLogic.sol";
 
 import { DataTypes } from "@types/DataTypes.sol";
 
-contract EModeFacet is Modifiers {
+contract EModeEntry is Modifiers {
   function setUserEMode(uint8 categoryId) external {
     EModeLogic.executeSetUserEMode(
       ps().usersConfig[msg.sender],

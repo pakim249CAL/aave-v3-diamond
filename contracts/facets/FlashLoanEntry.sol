@@ -10,7 +10,7 @@ import { AccessControlLogic } from "@logic/AccessControlLogic.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
 
-contract FlashLoanFacet is Modifiers {
+contract FlashLoanEntry is Modifiers {
   function flashLoan(
     address receiverAddress,
     address[] calldata assets,

@@ -10,7 +10,7 @@ import { Errors } from "@helpers/Errors.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
 
-contract SupplyFacet is Modifiers {
+contract SupplyEntry is Modifiers {
   function supply(
     address asset,
     uint256 amount,

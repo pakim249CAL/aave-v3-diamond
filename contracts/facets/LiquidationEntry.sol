@@ -8,7 +8,7 @@ import { DataTypes } from "@types/DataTypes.sol";
 
 import { LiquidationLogic } from "@logic/LiquidationLogic.sol";
 
-contract LiquidationFacet is Modifiers {
+contract LiquidationEntry is Modifiers {
   function liquidationCall(
     address collateralAsset,
     address debtAsset,

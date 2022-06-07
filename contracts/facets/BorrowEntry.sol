@@ -9,7 +9,7 @@ import { BorrowLogic } from "@logic/BorrowLogic.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
 
-contract BorrowFacet is Modifiers {
+contract BorrowEntry is Modifiers {
   function borrow(
     address asset,
     uint256 amount,
