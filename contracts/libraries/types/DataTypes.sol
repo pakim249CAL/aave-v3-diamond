@@ -191,7 +191,6 @@ library DataTypes {
     uint256 flashLoanPremiumTotal;
     uint256 maxStableRateBorrowSizePercent;
     uint256 reservesCount;
-    address addressesProvider;
     uint8 userEModeCategory;
     bool isAuthorizedFlashBorrower;
   }

@@ -285,7 +285,6 @@ library SupplyLogic {
    * @param userConfig The users configuration mapping that track the supplied/borrowed assets
    * @param asset The address of the asset being configured as collateral
    * @param useAsCollateral True if the user wants to set the asset as collateral, false otherwise
-   * @param reservesCount The number of initialized reserves
    * @param priceOracle The address of the price oracle
    * @param userEModeCategory The eMode category chosen by the user
    */
@@ -293,7 +292,6 @@ library SupplyLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     address asset,
     bool useAsCollateral,
-    uint256 reservesCount,
     address priceOracle,
     uint8 userEModeCategory
   ) internal {
@@ -328,7 +326,7 @@ library SupplyLogic {
         userConfig,
         asset,
         msg.sender,
-        reservesCount,
+        ps().reservesCount,
         priceOracle,
         userEModeCategory
       );

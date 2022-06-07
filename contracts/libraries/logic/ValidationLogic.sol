@@ -557,12 +557,10 @@ library ValidationLogic {
 
   /**
    * @notice Validates a flashloan action.
-   * @param reservesData The state of all the reserves
    * @param assets The assets being flash-borrowed
    * @param amounts The amounts for each asset being borrowed
    */
   function validateFlashloan(
-    mapping(address => DataTypes.ReserveData) storage reservesData,
     address[] memory assets,
     uint256[] memory amounts
   ) internal view {
@@ -571,8 +569,9 @@ library ValidationLogic {
       Errors.INCONSISTENT_FLASHLOAN_PARAMS
     );
     for (uint256 i = 0; i < assets.length; i++) {
-      DataTypes.ReserveConfigurationMap
-        memory configuration = reservesData[assets[i]].configuration;
+      DataTypes.ReserveConfigurationMap memory configuration = ps()
+        .reserves[assets[i]]
+        .configuration;
       require(!configuration.getPaused(), Errors.RESERVE_PAUSED);
       require(configuration.getActive(), Errors.RESERVE_INACTIVE);
     }
@@ -756,18 +755,13 @@ library ValidationLogic {
 
   /**
    * @notice Validates a drop reserve action.
-   * @param reservesList The addresses of all the active reserves
-   * @param reserve The reserve object
    * @param asset The address of the reserve's underlying asset
    **/
-  function validateDropReserve(
-    mapping(uint256 => address) storage reservesList,
-    DataTypes.ReserveData storage reserve,
-    address asset
-  ) internal view {
+  function validateDropReserve(address asset) internal view {
+    DataTypes.ReserveData storage reserve = ps().reserves[asset];
     require(asset != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
     require(
-      reserve.id != 0 || reservesList[0] == asset,
+      reserve.id != 0 || ps().reservesList[0] == asset,
       Errors.ASSET_NOT_LISTED
     );
     require(

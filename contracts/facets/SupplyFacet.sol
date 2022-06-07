@@ -3,35 +3,14 @@ pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
 import { Modifiers } from "@abstract/Modifiers.sol";
-import { BridgeLogic } from "@logic/BridgeLogic.sol";
+
 import { SupplyLogic } from "@logic/SupplyLogic.sol";
-import { BorrowLogic } from "@logic/BorrowLogic.sol";
+import { Errors } from "@helpers/Errors.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
 import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
 
-contract PoolFacet is Modifiers {
-  function mintUnbacked(
-    address asset,
-    uint256 amount,
-    address onBehalfOf,
-    uint16 referralCode
-  ) external onlyBridge {
-    BridgeLogic.executeMintUnbacked(
-      asset,
-      amount,
-      onBehalfOf,
-      referralCode
-    );
-  }
-
-  function backUnbacked(
-    address asset,
-    uint256 amount,
-    uint256 fee
-  ) external onlyBridge {
-    BridgeLogic.executeBackUnbacked(asset, amount, fee);
-  }
-
+contract SupplyFacet is Modifiers {
   function supply(
     address asset,
     uint256 amount,
@@ -93,30 +72,58 @@ contract PoolFacet is Modifiers {
       );
   }
 
-  function borrow(
+  function setUserUseReserveAsCollateral(
+    address asset,
+    bool useAsCollateral
+  ) external {
+    SupplyLogic.executeUseReserveAsCollateral(
+      ps().usersConfig[msg.sender],
+      asset,
+      useAsCollateral,
+      address(0), // TODO ORACLE
+      ps().usersEModeCategory[msg.sender]
+    );
+  }
+
+  function finalizeTransfer(
+    address asset,
+    address from,
+    address to,
+    uint256 amount,
+    uint256 balanceFromBefore,
+    uint256 balanceToBefore
+  ) external {
+    require(
+      msg.sender == ps().reserves[asset].aTokenAddress,
+      Errors.CALLER_NOT_ATOKEN
+    );
+    SupplyLogic.executeFinalizeTransfer(
+      DataTypes.FinalizeTransferParams({
+        asset: asset,
+        from: from,
+        to: to,
+        amount: amount,
+        balanceFromBefore: balanceFromBefore,
+        balanceToBefore: balanceToBefore,
+        reservesCount: ps().reservesCount,
+        oracle: address(0), //TODO: Oracle
+        fromEModeCategory: ps().usersEModeCategory[from]
+      })
+    );
+  }
+
+  function deposit(
     address asset,
     uint256 amount,
-    uint256 interestRateMode,
-    uint16 referralCode,
-    address onBehalfOf
+    address onBehalfOf,
+    uint16 referralCode
   ) external {
-    BorrowLogic.executeBorrow(
-      DataTypes.ExecuteBorrowParams({
+    SupplyLogic.executeSupply(
+      DataTypes.ExecuteSupplyParams({
         asset: asset,
-        user: msg.sender,
-        onBehalfOf: onBehalfOf,
         amount: amount,
-        interestRateMode: DataTypes.InterestRateMode(
-          interestRateMode
-        ),
-        referralCode: referralCode,
-        releaseUnderlying: true,
-        maxStableRateBorrowSizePercent: ps()
-          .maxStableRateBorrowSizePercent,
-        reservesCount: ps().reservesCount,
-        oracle: address(0), //TODO
-        userEModeCategory: ps().usersEModeCategory[onBehalfOf],
-        priceOracleSentinel: address(0) //TODO
+        onBehalfOf: onBehalfOf,
+        referralCode: referralCode
       })
     );
   }

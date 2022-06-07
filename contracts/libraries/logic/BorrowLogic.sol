@@ -201,14 +201,13 @@ library BorrowLogic {
    * equivalent amount of debt for the user by burning the corresponding debt token. For isolated positions, it also
    * reduces the isolated debt.
    * @dev  Emits the `Repay()` event
-   * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param params The additional parameters needed to execute the repay function
    * @return The actual amount being repaid
    */
-  function executeRepay(
-    DataTypes.UserConfigurationMap storage userConfig,
-    DataTypes.ExecuteRepayParams memory params
-  ) internal returns (uint256) {
+  function executeRepay(DataTypes.ExecuteRepayParams memory params)
+    internal
+    returns (uint256)
+  {
     DataTypes.ReserveData storage reserve = ps().reserves[
       params.asset
     ];
@@ -271,11 +270,14 @@ library BorrowLogic {
     );
 
     if (stableDebt + variableDebt - paybackAmount == 0) {
-      userConfig.setBorrowing(reserve.id, false);
+      ps().usersConfig[params.onBehalfOf].setBorrowing(
+        reserve.id,
+        false
+      );
     }
 
     IsolationModeLogic.updateIsolatedDebtIfIsolated(
-      userConfig,
+      ps().usersConfig[params.onBehalfOf],
       reserveCache,
       paybackAmount
     );
@@ -315,15 +317,14 @@ library BorrowLogic {
    * rate borrows might need to be rebalanced to bring back equilibrium between the borrow and supply APYs.
    * @dev The rules that define if a position can be rebalanced are implemented in `ValidationLogic.validateRebalanceStableBorrowRate()`
    * @dev Emits the `RebalanceStableBorrowRate()` event
-   * @param reserve The state of the reserve of the asset being repaid
    * @param asset The asset of the position being rebalanced
    * @param user The user being rebalanced
    */
   function executeRebalanceStableBorrowRate(
-    DataTypes.ReserveData storage reserve,
     address asset,
     address user
   ) internal {
+    DataTypes.ReserveData storage reserve = ps().reserves[asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
     reserve.updateState(reserveCache);
 
@@ -361,17 +362,16 @@ library BorrowLogic {
   /**
    * @notice Implements the swap borrow rate feature. Borrowers can swap from variable to stable positions at any time.
    * @dev Emits the `Swap()` event
-   * @param reserve The of the reserve of the asset being repaid
    * @param userConfig The user configuration mapping that tracks the supplied/borrowed assets
    * @param asset The asset of the position being swapped
    * @param interestRateMode The current interest rate mode of the position being swapped
    */
   function executeSwapBorrowRateMode(
-    DataTypes.ReserveData storage reserve,
     DataTypes.UserConfigurationMap storage userConfig,
     address asset,
     DataTypes.InterestRateMode interestRateMode
   ) internal {
+    DataTypes.ReserveData storage reserve = ps().reserves[asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
     reserve.updateState(reserveCache);
