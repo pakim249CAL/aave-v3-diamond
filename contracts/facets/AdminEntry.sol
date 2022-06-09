@@ -5,6 +5,7 @@ import { LibStorage } from "@storage/LibStorage.sol";
 import { Modifiers } from "@abstract/Modifiers.sol";
 
 import { PoolLogic } from "@logic/PoolLogic.sol";
+import { OracleLogic } from "@logic/OracleLogic.sol";
 
 import { Errors } from "@helpers/Errors.sol";
 
@@ -111,5 +112,33 @@ contract AdminEntry is Modifiers {
     uint256 amount
   ) external onlyPoolAdmin {
     PoolLogic.executeRescueTokens(token, to, amount);
+  }
+
+  function setAssetSources(
+    address[] calldata assets,
+    address[] calldata sources
+  ) external onlyPoolAdmin {
+    OracleLogic.setAssetsSources(assets, sources);
+  }
+
+  function setFallbackOracle(address fallbackOracle)
+    external
+    onlyPoolAdmin
+  {
+    OracleLogic.setFallbackOracle(fallbackOracle);
+  }
+
+  function setSequencerOracle(address newSequencerOracle)
+    external
+    onlyPoolAdmin
+  {
+    OracleLogic.setSequencerOracle(newSequencerOracle);
+  }
+
+  function setGracePeriod(uint256 newGracePeriod)
+    external
+    onlyPoolAdmin
+  {
+    OracleLogic.setGracePeriod(newGracePeriod);
   }
 }

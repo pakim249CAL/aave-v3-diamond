@@ -37,6 +37,14 @@ abstract contract Modifiers {
     return LibStorage.poolStorage();
   }
 
+  function os()
+    internal
+    pure
+    returns (LibStorage.OracleStorage storage)
+  {
+    return LibStorage.oracleStorage();
+  }
+
   modifier onlyOwner() {
     LibDiamond.enforceIsContractOwner();
     _;

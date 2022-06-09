@@ -5,6 +5,7 @@ import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { IPriceOracleGetter } from "@interfaces/IPriceOracleGetter.sol";
 import { AggregatorInterface } from "@interfaces/AggregatorInterface.sol";
+import { ISequencerOracle } from "@interfaces/ISequencerOracle.sol";
 
 library LibStorage {
   // Internal Structs
@@ -41,7 +42,9 @@ library LibStorage {
   struct OracleStorage {
     // Map of asset price sources (asset => priceSource)
     mapping(address => AggregatorInterface) assetsSources;
-    IPriceOracleGetter _fallbackOracle;
+    IPriceOracleGetter fallbackOracle;
+    ISequencerOracle sequencerOracle;
+    uint256 gracePeriod;
   }
 
   function poolStorage()
