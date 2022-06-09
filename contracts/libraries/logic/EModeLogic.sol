@@ -74,26 +74,11 @@ library EModeLogic {
    * @param category The user eMode category
    * @return The eMode ltv
    * @return The eMode liquidation threshold
-   * @return The eMode asset price
    **/
   function getEModeConfiguration(
     DataTypes.EModeCategory storage category
-  )
-    internal
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256
-    )
-  {
-    uint256 eModeAssetPrice = 0;
-
-    return (
-      category.ltv,
-      category.liquidationThreshold,
-      eModeAssetPrice
-    );
+  ) internal view returns (uint256, uint256) {
+    return (category.ltv, category.liquidationThreshold);
   }
 
   /**
