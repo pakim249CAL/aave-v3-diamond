@@ -3,6 +3,9 @@ pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
 
+/// @title ERC1155 Non-Compliant
+/// @dev ERC1155 multi-token architecture is desired but external calls and hooks are problematic for re-entry reasons, so they are removed.
+
 library ERC1155LogicNonCompliant {
   event TransferSingle(
     address indexed operator,
