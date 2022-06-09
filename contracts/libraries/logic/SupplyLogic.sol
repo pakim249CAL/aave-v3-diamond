@@ -190,7 +190,6 @@ library SupplyLogic {
           params.asset,
           msg.sender,
           ps().reservesCount,
-          params.oracle,
           ps().usersEModeCategory[msg.sender]
         );
       }
@@ -244,7 +243,6 @@ library SupplyLogic {
             params.asset,
             params.from,
             params.reservesCount,
-            params.oracle,
             params.fromEModeCategory
           );
         }
@@ -285,14 +283,12 @@ library SupplyLogic {
    * @param userConfig The users configuration mapping that track the supplied/borrowed assets
    * @param asset The address of the asset being configured as collateral
    * @param useAsCollateral True if the user wants to set the asset as collateral, false otherwise
-   * @param priceOracle The address of the price oracle
    * @param userEModeCategory The eMode category chosen by the user
    */
   function executeUseReserveAsCollateral(
     DataTypes.UserConfigurationMap storage userConfig,
     address asset,
     bool useAsCollateral,
-    address priceOracle,
     uint8 userEModeCategory
   ) internal {
     DataTypes.ReserveData storage reserve = ps().reserves[asset];
@@ -327,7 +323,6 @@ library SupplyLogic {
         asset,
         msg.sender,
         ps().reservesCount,
-        priceOracle,
         userEModeCategory
       );
 

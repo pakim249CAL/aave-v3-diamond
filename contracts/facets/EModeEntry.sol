@@ -14,7 +14,6 @@ contract EModeEntry is Modifiers {
       ps().usersConfig[msg.sender],
       DataTypes.ExecuteSetUserEModeParams({
         reservesCount: ps().reservesCount,
-        oracle: address(0), //TODO
         categoryId: categoryId
       })
     );

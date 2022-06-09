@@ -4,7 +4,6 @@ pragma solidity 0.8.14;
 import { LibStorage } from "@storage/LibStorage.sol";
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
 import { IERC20 } from "@interfaces/IERC20.sol";
-import { IPriceOracleGetter } from "@interfaces/IPriceOracleGetter.sol";
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
 import { Errors } from "@helpers/Errors.sol";
 import { WadRayMath } from "@math/WadRayMath.sol";
@@ -12,6 +11,7 @@ import { PercentageMath } from "@math/PercentageMath.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
+import { OracleLogic } from "@logic/OracleLogic.sol";
 
 /**
  * @title EModeLogic library
@@ -62,8 +62,7 @@ library EModeLogic {
         userConfig,
         msg.sender,
         params.categoryId,
-        params.reservesCount,
-        params.oracle
+        params.reservesCount
       );
     }
     emit UserEModeSet(msg.sender, params.categoryId);
@@ -73,14 +72,12 @@ library EModeLogic {
    * @notice Gets the eMode configuration and calculates the eMode asset price if a custom oracle is configured
    * @dev The eMode asset price returned is 0 if no oracle is specified
    * @param category The user eMode category
-   * @param oracle The price oracle
    * @return The eMode ltv
    * @return The eMode liquidation threshold
    * @return The eMode asset price
    **/
   function getEModeConfiguration(
-    DataTypes.EModeCategory storage category,
-    IPriceOracleGetter oracle
+    DataTypes.EModeCategory storage category
   )
     internal
     view
@@ -91,11 +88,6 @@ library EModeLogic {
     )
   {
     uint256 eModeAssetPrice = 0;
-    address eModePriceSource = category.priceSource;
-
-    if (eModePriceSource != address(0)) {
-      eModeAssetPrice = oracle.getAssetPrice(eModePriceSource);
-    }
 
     return (
       category.ltv,

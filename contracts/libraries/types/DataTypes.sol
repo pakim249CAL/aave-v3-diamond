@@ -78,8 +78,6 @@ library DataTypes {
     uint16 ltv;
     uint16 liquidationThreshold;
     uint16 liquidationBonus;
-    // each eMode category may or may not have a custom oracle to override the individual assets price oracles
-    address priceSource;
     string label;
   }
 
@@ -119,9 +117,7 @@ library DataTypes {
     address debtAsset;
     address user;
     bool receiveAToken;
-    address priceOracle;
     uint8 userEModeCategory;
-    address priceOracleSentinel;
   }
 
   struct ExecuteSupplyParams {
@@ -141,9 +137,7 @@ library DataTypes {
     bool releaseUnderlying;
     uint256 maxStableRateBorrowSizePercent;
     uint256 reservesCount;
-    address oracle;
     uint8 userEModeCategory;
-    address priceOracleSentinel;
   }
 
   struct ExecuteRepayParams {
@@ -158,12 +152,10 @@ library DataTypes {
     address asset;
     uint256 amount;
     address to;
-    address oracle;
   }
 
   struct ExecuteSetUserEModeParams {
     uint256 reservesCount;
-    address oracle;
     uint8 categoryId;
   }
 
@@ -175,7 +167,6 @@ library DataTypes {
     uint256 balanceFromBefore;
     uint256 balanceToBefore;
     uint256 reservesCount;
-    address oracle;
     uint8 fromEModeCategory;
   }
 
@@ -218,7 +209,6 @@ library DataTypes {
     UserConfigurationMap userConfig;
     uint256 reservesCount;
     address user;
-    address oracle;
     uint8 userEModeCategory;
   }
 
@@ -231,9 +221,7 @@ library DataTypes {
     InterestRateMode interestRateMode;
     uint256 maxStableLoanPercent;
     uint256 reservesCount;
-    address oracle;
     uint8 userEModeCategory;
-    address priceOracleSentinel;
     bool isolationModeActive;
     address isolationModeCollateralAddress;
     uint256 isolationModeDebtCeiling;
@@ -243,7 +231,6 @@ library DataTypes {
     ReserveCache debtReserveCache;
     uint256 totalDebt;
     uint256 healthFactor;
-    address priceOracleSentinel;
   }
 
   struct CalculateInterestRatesParams {

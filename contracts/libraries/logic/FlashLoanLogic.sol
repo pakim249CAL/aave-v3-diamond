@@ -63,14 +63,6 @@ library FlashLoanLogic {
     return LibStorage.poolStorage();
   }
 
-  function os()
-    internal
-    pure
-    returns (LibStorage.OracleStorage storage)
-  {
-    return LibStorage.oracleStorage();
-  }
-
   /**
    * @notice Implements the flashloan feature that allow users to access liquidity of the pool for one transaction
    * as long as the amount taken plus fee is returned or debt is opened.
@@ -165,9 +157,7 @@ library FlashLoanLogic {
             maxStableRateBorrowSizePercent: params
               .maxStableRateBorrowSizePercent,
             reservesCount: params.reservesCount,
-            oracle: address(0), //TODO: Add oracle
-            userEModeCategory: params.userEModeCategory,
-            priceOracleSentinel: address(0) //TODO: Add sentinel
+            userEModeCategory: params.userEModeCategory
           })
         );
         // no premium is paid when taking on the flashloan as debt

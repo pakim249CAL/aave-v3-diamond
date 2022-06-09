@@ -66,8 +66,7 @@ contract SupplyEntry is Modifiers {
         DataTypes.ExecuteWithdrawParams({
           asset: asset,
           amount: amount,
-          to: to,
-          oracle: address(this) // TODO
+          to: to
         })
       );
   }
@@ -80,7 +79,6 @@ contract SupplyEntry is Modifiers {
       ps().usersConfig[msg.sender],
       asset,
       useAsCollateral,
-      address(0), // TODO ORACLE
       ps().usersEModeCategory[msg.sender]
     );
   }
@@ -106,7 +104,6 @@ contract SupplyEntry is Modifiers {
         balanceFromBefore: balanceFromBefore,
         balanceToBefore: balanceToBefore,
         reservesCount: ps().reservesCount,
-        oracle: address(0), //TODO: Oracle
         fromEModeCategory: ps().usersEModeCategory[from]
       })
     );

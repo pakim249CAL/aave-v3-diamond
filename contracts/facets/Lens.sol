@@ -58,7 +58,6 @@ contract Lens is Modifiers {
           userConfig: ps().usersConfig[user],
           reservesCount: ps().reservesCount,
           user: user,
-          oracle: address(0), //TODO: Add oracle
           userEModeCategory: ps().usersEModeCategory[user]
         })
       );

@@ -8,7 +8,6 @@ import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
 import { IReserveInterestRateStrategy } from "@interfaces/IReserveInterestRateStrategy.sol";
 import { IStableDebtToken } from "@interfaces/IStableDebtToken.sol";
 import { IScaledBalanceToken } from "@interfaces/IScaledBalanceToken.sol";
-import { IPriceOracleGetter } from "@interfaces/IPriceOracleGetter.sol";
 import { IAToken } from "@interfaces/IAToken.sol";
 import { IPriceOracleSentinel } from "@interfaces/IPriceOracleSentinel.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
@@ -19,6 +18,7 @@ import { PercentageMath } from "@math/PercentageMath.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { GenericLogic } from "@logic/GenericLogic.sol";
+import { OracleLogic } from "@logic/OracleLogic.sol";
 import { SafeCast } from "@dependencies/SafeCast.sol";
 
 /**
@@ -174,9 +174,8 @@ library ValidationLogic {
     require(vars.borrowingEnabled, Errors.BORROWING_NOT_ENABLED);
 
     require(
-      params.priceOracleSentinel == address(0) ||
-        IPriceOracleSentinel(params.priceOracleSentinel)
-          .isBorrowAllowed(),
+      address(os().sequencerOracle) == address(0) ||
+        OracleLogic.isBorrowAllowed(),
       Errors.PRICE_ORACLE_SENTINEL_CHECK_FAILED
     );
 
@@ -250,9 +249,6 @@ library ValidationLogic {
           params.userEModeCategory,
         Errors.INCONSISTENT_EMODE_CATEGORY
       );
-      vars.eModePriceSource = ps()
-        .eModeCategories[params.userEModeCategory]
-        .priceSource;
     }
 
     (
@@ -267,7 +263,6 @@ library ValidationLogic {
         userConfig: params.userConfig,
         reservesCount: params.reservesCount,
         user: params.userAddress,
-        oracle: params.oracle,
         userEModeCategory: params.userEModeCategory
       })
     );
@@ -284,7 +279,7 @@ library ValidationLogic {
     );
 
     vars.amountInBaseCurrency =
-      IPriceOracleGetter(params.oracle).getAssetPrice(
+      OracleLogic.getAssetPrice(
         vars.eModePriceSource != address(0)
           ? vars.eModePriceSource
           : params.asset
@@ -637,11 +632,10 @@ library ValidationLogic {
     );
 
     require(
-      params.priceOracleSentinel == address(0) ||
+      address(os().sequencerOracle) == address(0) ||
         params.healthFactor <
         MINIMUM_HEALTH_FACTOR_LIQUIDATION_THRESHOLD ||
-        IPriceOracleSentinel(params.priceOracleSentinel)
-          .isLiquidationAllowed(),
+        OracleLogic.isLiquidationAllowed(),
       Errors.PRICE_ORACLE_SENTINEL_CHECK_FAILED
     );
 
@@ -672,14 +666,12 @@ library ValidationLogic {
    * @param user The user to validate health factor of
    * @param userEModeCategory The users active efficiency mode category
    * @param reservesCount The number of available reserves
-   * @param oracle The price oracle
    */
   function validateHealthFactor(
     DataTypes.UserConfigurationMap memory userConfig,
     address user,
     uint8 userEModeCategory,
-    uint256 reservesCount,
-    address oracle
+    uint256 reservesCount
   ) internal view returns (uint256, bool) {
     (
       ,
@@ -693,7 +685,6 @@ library ValidationLogic {
           userConfig: userConfig,
           reservesCount: reservesCount,
           user: user,
-          oracle: oracle,
           userEModeCategory: userEModeCategory
         })
       );
@@ -712,7 +703,6 @@ library ValidationLogic {
    * @param asset The asset for which the ltv will be validated
    * @param from The user from which the aTokens are being transferred
    * @param reservesCount The number of available reserves
-   * @param oracle The price oracle
    * @param userEModeCategory The users active efficiency mode category
    */
   function validateHFAndLtv(
@@ -720,7 +710,6 @@ library ValidationLogic {
     address asset,
     address from,
     uint256 reservesCount,
-    address oracle,
     uint8 userEModeCategory
   ) internal view {
     DataTypes.ReserveData memory reserve = ps().reserves[asset];
@@ -729,8 +718,7 @@ library ValidationLogic {
       userConfig,
       from,
       userEModeCategory,
-      reservesCount,
-      oracle
+      reservesCount
     );
 
     require(

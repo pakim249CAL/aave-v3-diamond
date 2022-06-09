@@ -37,14 +37,6 @@ library BorrowLogic {
     return LibStorage.poolStorage();
   }
 
-  function os()
-    internal
-    pure
-    returns (LibStorage.OracleStorage storage)
-  {
-    return LibStorage.oracleStorage();
-  }
-
   // See `IPool` for descriptions
   event Borrow(
     address indexed reserve,
@@ -109,9 +101,7 @@ library BorrowLogic {
         interestRateMode: params.interestRateMode,
         maxStableLoanPercent: params.maxStableRateBorrowSizePercent,
         reservesCount: params.reservesCount,
-        oracle: params.oracle,
         userEModeCategory: params.userEModeCategory,
-        priceOracleSentinel: params.priceOracleSentinel,
         isolationModeActive: isolationModeActive,
         isolationModeCollateralAddress: isolationModeCollateralAddress,
         isolationModeDebtCeiling: isolationModeDebtCeiling

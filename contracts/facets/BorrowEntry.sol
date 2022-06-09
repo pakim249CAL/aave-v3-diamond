@@ -31,9 +31,7 @@ contract BorrowEntry is Modifiers {
         maxStableRateBorrowSizePercent: ps()
           .maxStableRateBorrowSizePercent,
         reservesCount: ps().reservesCount,
-        oracle: address(0), //TODO
-        userEModeCategory: ps().usersEModeCategory[onBehalfOf],
-        priceOracleSentinel: address(0) //TODO
+        userEModeCategory: ps().usersEModeCategory[onBehalfOf]
       })
     );
   }

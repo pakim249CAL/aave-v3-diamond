@@ -4,7 +4,6 @@ pragma solidity 0.8.14;
 import { LibStorage } from "@storage/LibStorage.sol";
 import { IERC20 } from "@interfaces/IERC20.sol";
 import { IScaledBalanceToken } from "@interfaces/IScaledBalanceToken.sol";
-import { IPriceOracleGetter } from "@interfaces/IPriceOracleGetter.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
 import { PercentageMath } from "@math/PercentageMath.sol";
@@ -12,6 +11,7 @@ import { WadRayMath } from "@math/WadRayMath.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { EModeLogic } from "@logic/EModeLogic.sol";
+import { OracleLogic } from "@logic/OracleLogic.sol";
 
 /**
  * @title GenericLogic library
@@ -101,8 +101,7 @@ library GenericLogic {
         vars.eModeLiqThreshold,
         vars.eModeAssetPrice
       ) = EModeLogic.getEModeConfiguration(
-        ps().eModeCategories[params.userEModeCategory],
-        IPriceOracleGetter(params.oracle)
+        ps().eModeCategories[params.userEModeCategory]
       );
     }
 
@@ -143,9 +142,7 @@ library GenericLogic {
       vars.assetPrice = vars.eModeAssetPrice != 0 &&
         params.userEModeCategory == vars.eModeAssetCategory
         ? vars.eModeAssetPrice
-        : IPriceOracleGetter(params.oracle).getAssetPrice(
-          vars.currentReserveAddress
-        );
+        : OracleLogic.getAssetPrice(vars.currentReserveAddress);
 
       if (
         vars.liquidationThreshold != 0 &&

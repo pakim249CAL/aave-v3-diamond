@@ -12,13 +12,13 @@ import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { GenericLogic } from "@logic/GenericLogic.sol";
 import { IsolationModeLogic } from "@logic/IsolationModeLogic.sol";
+import { OracleLogic } from "@logic/OracleLogic.sol";
 import { EModeLogic } from "@logic/EModeLogic.sol";
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { IAToken } from "@interfaces/IAToken.sol";
 import { IStableDebtToken } from "@interfaces/IStableDebtToken.sol";
 import { IVariableDebtToken } from "@interfaces/IVariableDebtToken.sol";
-import { IPriceOracleGetter } from "@interfaces/IPriceOracleGetter.sol";
 
 /**
  * @title LiquidationLogic library
@@ -126,7 +126,6 @@ library LiquidationLogic {
           userConfig: userConfig,
           reservesCount: params.reservesCount,
           user: params.user,
-          oracle: params.priceOracle,
           userEModeCategory: params.userEModeCategory
         })
       );
@@ -147,8 +146,7 @@ library LiquidationLogic {
       DataTypes.ValidateLiquidationCallParams({
         debtReserveCache: vars.debtReserveCache,
         totalDebt: vars.userTotalDebt,
-        healthFactor: vars.healthFactor,
-        priceOracleSentinel: params.priceOracleSentinel
+        healthFactor: vars.healthFactor
       })
     );
 
@@ -174,8 +172,7 @@ library LiquidationLogic {
       vars.debtPriceSource,
       vars.actualDebtToLiquidate,
       vars.userCollateralBalance,
-      vars.liquidationBonus,
-      IPriceOracleGetter(params.priceOracle)
+      vars.liquidationBonus
     );
 
     if (vars.userTotalDebt == vars.actualDebtToLiquidate) {
@@ -444,10 +441,6 @@ library LiquidationLogic {
     address debtPriceSource = params.debtAsset;
 
     if (params.userEModeCategory != 0) {
-      address eModePriceSource = ps()
-        .eModeCategories[params.userEModeCategory]
-        .priceSource;
-
       if (
         EModeLogic.isInEModeCategory(
           params.userEModeCategory,
@@ -457,15 +450,6 @@ library LiquidationLogic {
         liquidationBonus = ps()
           .eModeCategories[params.userEModeCategory]
           .liquidationBonus;
-
-        if (eModePriceSource != address(0)) {
-          collateralPriceSource = eModePriceSource;
-        }
-      }
-
-      // when in eMode, debt will always be in the same eMode category, can skip matching category check
-      if (eModePriceSource != address(0)) {
-        debtPriceSource = eModePriceSource;
       }
     }
 
@@ -516,8 +500,7 @@ library LiquidationLogic {
     address debtAsset,
     uint256 debtToCover,
     uint256 userCollateralBalance,
-    uint256 liquidationBonus,
-    IPriceOracleGetter oracle
+    uint256 liquidationBonus
   )
     internal
     view
@@ -529,8 +512,8 @@ library LiquidationLogic {
   {
     AvailableCollateralToLiquidateLocalVars memory vars;
 
-    vars.collateralPrice = oracle.getAssetPrice(collateralAsset);
-    vars.debtAssetPrice = oracle.getAssetPrice(debtAsset);
+    vars.collateralPrice = OracleLogic.getAssetPrice(collateralAsset);
+    vars.debtAssetPrice = OracleLogic.getAssetPrice(debtAsset);
 
     vars.collateralDecimals = collateralReserve
       .configuration

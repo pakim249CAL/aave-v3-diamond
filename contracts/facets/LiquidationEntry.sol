@@ -24,9 +24,7 @@ contract LiquidationEntry is Modifiers {
         debtAsset: debtAsset,
         user: user,
         receiveAToken: receiveAToken,
-        priceOracle: address(0), //TODO
-        userEModeCategory: ps().usersEModeCategory[user],
-        priceOracleSentinel: address(0) //TODO
+        userEModeCategory: ps().usersEModeCategory[user]
       })
     );
   }
