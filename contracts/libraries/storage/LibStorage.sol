@@ -47,6 +47,13 @@ library LibStorage {
     uint256 gracePeriod;
   }
 
+  struct ERC1155 {
+    // Mapping from token ID to account balances
+    mapping(uint256 => mapping(address => uint256)) balances;
+    // Mapping from account to operator approvals
+    mapping(address => mapping(address => bool)) operatorApprovals;
+  }
+
   function poolStorage()
     internal
     pure
@@ -77,6 +84,13 @@ library LibStorage {
     bytes32 position = keccak256("diamond.aave.v3.oracle.storage");
     assembly {
       os.slot := position
+    }
+  }
+
+  function tokenStorage() internal pure returns (ERC1155 storage ts) {
+    bytes32 position = keccak256("diamond.aave.v3.token.storage");
+    assembly {
+      ts.slot := position
     }
   }
 }
