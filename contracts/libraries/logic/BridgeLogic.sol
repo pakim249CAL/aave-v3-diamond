@@ -14,6 +14,7 @@ import { PercentageMath } from "@math/PercentageMath.sol";
 import { Errors } from "@helpers/Errors.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 
 library BridgeLogic {
   using ReserveLogic for DataTypes.ReserveCache;
@@ -31,6 +32,10 @@ library BridgeLogic {
     returns (LibStorage.PoolStorage storage)
   {
     return LibStorage.poolStorage();
+  }
+
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
   }
 
   // See `IPool` for descriptions
@@ -95,7 +100,7 @@ library BridgeLogic {
     reserve.updateInterestRates(reserveCache, asset, 0, 0);
 
     bool isFirstSupply = IAToken(reserveCache.aTokenAddress).mint(
-      msg.sender,
+      msgSender(),
       onBehalfOf,
       amount,
       reserveCache.nextLiquidityIndex
@@ -115,7 +120,7 @@ library BridgeLogic {
 
     emit MintUnbacked(
       asset,
-      msg.sender,
+      msgSender(),
       onBehalfOf,
       amount,
       referralCode
@@ -162,11 +167,11 @@ library BridgeLogic {
     reserve.updateInterestRates(reserveCache, asset, added, 0);
 
     IERC20(asset).safeTransferFrom(
-      msg.sender,
+      msgSender(),
       reserveCache.aTokenAddress,
       added
     );
 
-    emit BackUnbacked(asset, msg.sender, backingAmount, fee);
+    emit BackUnbacked(asset, msgSender(), backingAmount, fee);
   }
 }

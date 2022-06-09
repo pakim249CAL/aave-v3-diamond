@@ -14,6 +14,7 @@ import { GenericLogic } from "@logic/GenericLogic.sol";
 import { IsolationModeLogic } from "@logic/IsolationModeLogic.sol";
 import { OracleLogic } from "@logic/OracleLogic.sol";
 import { EModeLogic } from "@logic/EModeLogic.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { IAToken } from "@interfaces/IAToken.sol";
@@ -59,6 +60,10 @@ library LiquidationLogic {
     returns (LibStorage.PoolStorage storage)
   {
     return LibStorage.poolStorage();
+  }
+
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
   }
 
   /**
@@ -223,13 +228,13 @@ library LiquidationLogic {
 
     // Transfers the debt asset being repaid to the aToken, where the liquidity is kept
     IERC20(params.debtAsset).safeTransferFrom(
-      msg.sender,
+      msgSender(),
       vars.debtReserveCache.aTokenAddress,
       vars.actualDebtToLiquidate
     );
 
     IAToken(vars.debtReserveCache.aTokenAddress).handleRepayment(
-      msg.sender,
+      msgSender(),
       vars.actualDebtToLiquidate
     );
 
@@ -239,7 +244,7 @@ library LiquidationLogic {
       params.user,
       vars.actualDebtToLiquidate,
       vars.actualCollateralToLiquidate,
-      msg.sender,
+      msgSender(),
       params.receiveAToken
     );
   }
@@ -269,7 +274,7 @@ library LiquidationLogic {
     // Burn the equivalent amount of aToken, sending the underlying to the liquidator
     vars.collateralAToken.burn(
       params.user,
-      msg.sender,
+      msgSender(),
       vars.actualCollateralToLiquidate,
       collateralReserveCache.nextLiquidityIndex
     );
@@ -290,16 +295,16 @@ library LiquidationLogic {
   ) internal {
     uint256 liquidatorPreviousATokenBalance = IERC20(
       vars.collateralAToken
-    ).balanceOf(msg.sender);
+    ).balanceOf(msgSender());
     vars.collateralAToken.transferOnLiquidation(
       params.user,
-      msg.sender,
+      msgSender(),
       vars.actualCollateralToLiquidate
     );
 
     if (liquidatorPreviousATokenBalance == 0) {
       DataTypes.UserConfigurationMap storage liquidatorConfig = ps()
-        .usersConfig[msg.sender];
+        .usersConfig[msgSender()];
       if (
         ValidationLogic.validateUseAsCollateral(
           liquidatorConfig,
@@ -312,7 +317,7 @@ library LiquidationLogic {
         );
         emit ReserveUsedAsCollateralEnabled(
           params.collateralAsset,
-          msg.sender
+          msgSender()
         );
       }
     }

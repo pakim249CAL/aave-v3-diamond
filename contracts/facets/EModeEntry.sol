@@ -11,7 +11,7 @@ import { DataTypes } from "@types/DataTypes.sol";
 contract EModeEntry is Modifiers {
   function setUserEMode(uint8 categoryId) external {
     EModeLogic.executeSetUserEMode(
-      ps().usersConfig[msg.sender],
+      ps().usersConfig[msgSender()],
       DataTypes.ExecuteSetUserEModeParams({
         reservesCount: ps().reservesCount,
         categoryId: categoryId

@@ -18,6 +18,7 @@ import { DataTypes } from "@types/DataTypes.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { BorrowLogic } from "@logic/BorrowLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 
 /**
  * @title FlashLoanLogic library
@@ -61,6 +62,10 @@ library FlashLoanLogic {
     returns (LibStorage.PoolStorage storage)
   {
     return LibStorage.poolStorage();
+  }
+
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
   }
 
   /**
@@ -113,7 +118,7 @@ library FlashLoanLogic {
         params.assets,
         params.amounts,
         vars.totalPremiums,
-        msg.sender,
+        msgSender(),
         params.params
       ),
       Errors.INVALID_FLASHLOAN_EXECUTOR_RETURN
@@ -146,7 +151,7 @@ library FlashLoanLogic {
         BorrowLogic.executeBorrow(
           DataTypes.ExecuteBorrowParams({
             asset: vars.currentAsset,
-            user: msg.sender,
+            user: msgSender(),
             onBehalfOf: params.onBehalfOf,
             amount: vars.currentAmount,
             interestRateMode: DataTypes.InterestRateMode(
@@ -163,7 +168,7 @@ library FlashLoanLogic {
         // no premium is paid when taking on the flashloan as debt
         emit FlashLoan(
           params.receiverAddress,
-          msg.sender,
+          msgSender(),
           vars.currentAsset,
           vars.currentAmount,
           DataTypes.InterestRateMode(
@@ -213,7 +218,7 @@ library FlashLoanLogic {
         params.asset,
         params.amount,
         totalPremium,
-        msg.sender,
+        msgSender(),
         params.params
       ),
       Errors.INVALID_FLASHLOAN_EXECUTOR_RETURN
@@ -280,7 +285,7 @@ library FlashLoanLogic {
 
     emit FlashLoan(
       params.receiverAddress,
-      msg.sender,
+      msgSender(),
       params.asset,
       params.amount,
       DataTypes.InterestRateMode(0),

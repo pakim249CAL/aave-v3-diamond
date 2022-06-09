@@ -20,6 +20,7 @@ import { PercentageMath } from "@math/PercentageMath.sol";
 
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 
 /**
  * @title SupplyLogic library
@@ -66,6 +67,10 @@ library SupplyLogic {
     return LibStorage.poolStorage();
   }
 
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
+  }
+
   /**
    * @notice Implements the supply feature. Through `supply()`, users supply assets to the Aave protocol.
    * @dev Emits the `Supply()` event.
@@ -96,13 +101,13 @@ library SupplyLogic {
     );
 
     IERC20(params.asset).safeTransferFrom(
-      msg.sender,
+      msgSender(),
       reserveCache.aTokenAddress,
       params.amount
     );
 
     bool isFirstSupply = IAToken(reserveCache.aTokenAddress).mint(
-      msg.sender,
+      msgSender(),
       params.onBehalfOf,
       params.amount,
       reserveCache.nextLiquidityIndex
@@ -125,7 +130,7 @@ library SupplyLogic {
 
     emit Supply(
       params.asset,
-      msg.sender,
+      msgSender(),
       params.onBehalfOf,
       params.amount,
       params.referralCode
@@ -144,7 +149,7 @@ library SupplyLogic {
     DataTypes.ExecuteWithdrawParams memory params
   ) internal returns (uint256) {
     DataTypes.UserConfigurationMap storage userConfig = ps()
-      .usersConfig[msg.sender];
+      .usersConfig[msgSender()];
 
     DataTypes.ReserveData storage reserve = ps().reserves[
       params.asset
@@ -154,7 +159,7 @@ library SupplyLogic {
     reserve.updateState(reserveCache);
 
     uint256 userBalance = IAToken(reserveCache.aTokenAddress)
-      .scaledBalanceOf(msg.sender)
+      .scaledBalanceOf(msgSender())
       .rayMul(reserveCache.nextLiquidityIndex);
 
     uint256 amountToWithdraw = params.amount;
@@ -177,7 +182,7 @@ library SupplyLogic {
     );
 
     IAToken(reserveCache.aTokenAddress).burn(
-      msg.sender,
+      msgSender(),
       params.to,
       amountToWithdraw,
       reserveCache.nextLiquidityIndex
@@ -186,11 +191,11 @@ library SupplyLogic {
     if (userConfig.isUsingAsCollateral(reserve.id)) {
       if (userConfig.isBorrowingAny()) {
         ValidationLogic.validateHFAndLtv(
-          ps().usersConfig[msg.sender],
+          ps().usersConfig[msgSender()],
           params.asset,
-          msg.sender,
+          msgSender(),
           ps().reservesCount,
-          ps().usersEModeCategory[msg.sender]
+          ps().usersEModeCategory[msgSender()]
         );
       }
 
@@ -198,14 +203,14 @@ library SupplyLogic {
         userConfig.setUsingAsCollateral(reserve.id, false);
         emit ReserveUsedAsCollateralDisabled(
           params.asset,
-          msg.sender
+          msgSender()
         );
       }
     }
 
     emit Withdraw(
       params.asset,
-      msg.sender,
+      msgSender(),
       params.to,
       amountToWithdraw
     );
@@ -295,7 +300,7 @@ library SupplyLogic {
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
     uint256 userBalance = IERC20(reserveCache.aTokenAddress)
-      .balanceOf(msg.sender);
+      .balanceOf(msgSender());
 
     ValidationLogic.validateSetUseReserveAsCollateral(
       reserveCache,
@@ -315,18 +320,18 @@ library SupplyLogic {
       );
 
       userConfig.setUsingAsCollateral(reserve.id, true);
-      emit ReserveUsedAsCollateralEnabled(asset, msg.sender);
+      emit ReserveUsedAsCollateralEnabled(asset, msgSender());
     } else {
       userConfig.setUsingAsCollateral(reserve.id, false);
       ValidationLogic.validateHFAndLtv(
         userConfig,
         asset,
-        msg.sender,
+        msgSender(),
         ps().reservesCount,
         userEModeCategory
       );
 
-      emit ReserveUsedAsCollateralDisabled(asset, msg.sender);
+      emit ReserveUsedAsCollateralDisabled(asset, msgSender());
     }
   }
 }

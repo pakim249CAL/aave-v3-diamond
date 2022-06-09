@@ -6,6 +6,7 @@ import { Modifiers } from "@abstract/Modifiers.sol";
 
 import { FlashLoanLogic } from "@logic/FlashLoanLogic.sol";
 import { AccessControlLogic } from "@logic/AccessControlLogic.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 
 import { DataTypes } from "@types/DataTypes.sol";
 import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
@@ -36,7 +37,7 @@ contract FlashLoanEntry is Modifiers {
         reservesCount: ps().reservesCount,
         userEModeCategory: ps().usersEModeCategory[onBehalfOf],
         isAuthorizedFlashBorrower: AccessControlLogic.isFlashBorrower(
-          msg.sender
+          msgSender()
         )
       });
 

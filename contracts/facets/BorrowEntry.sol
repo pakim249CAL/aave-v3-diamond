@@ -20,7 +20,7 @@ contract BorrowEntry is Modifiers {
     BorrowLogic.executeBorrow(
       DataTypes.ExecuteBorrowParams({
         asset: asset,
-        user: msg.sender,
+        user: msgSender(),
         onBehalfOf: onBehalfOf,
         amount: amount,
         interestRateMode: DataTypes.InterestRateMode(
@@ -68,7 +68,7 @@ contract BorrowEntry is Modifiers {
   ) external returns (uint256) {
     {
       IERC20Permit(asset).permit(
-        msg.sender,
+        msgSender(),
         address(this),
         amount,
         deadline,
@@ -105,7 +105,7 @@ contract BorrowEntry is Modifiers {
           interestRateMode: DataTypes.InterestRateMode(
             interestRateMode
           ),
-          onBehalfOf: msg.sender,
+          onBehalfOf: msgSender(),
           useATokens: true
         })
       );
@@ -115,7 +115,7 @@ contract BorrowEntry is Modifiers {
     external
   {
     BorrowLogic.executeSwapBorrowRateMode(
-      ps().usersConfig[msg.sender],
+      ps().usersConfig[msgSender()],
       asset,
       DataTypes.InterestRateMode(interestRateMode)
     );

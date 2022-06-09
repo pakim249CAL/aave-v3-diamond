@@ -2,6 +2,7 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 
 /// @title ERC1155 Non-Compliant
 /// @dev ERC1155 multi-token architecture is desired but external calls and hooks are problematic for re-entry reasons, so they are removed.
@@ -29,8 +30,16 @@ library ERC1155LogicNonCompliant {
     bool approved
   );
 
-  function ts() internal pure returns (LibStorage.ERC1155 storage) {
-    return LibStorage.tokenStorage();
+  function ts()
+    internal
+    pure
+    returns (LibStorage.ERC1155Storage storage)
+  {
+    return LibStorage.erc1155Storage();
+  }
+
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
   }
 
   function balanceOf(address account, uint256 id)
@@ -83,7 +92,7 @@ library ERC1155LogicNonCompliant {
       "ERC1155: transfer to the zero address"
     );
 
-    address operator = msg.sender;
+    address operator = msgSender();
 
     uint256 fromBalance = ts().balances[id][from];
     require(
@@ -113,7 +122,7 @@ library ERC1155LogicNonCompliant {
       "ERC1155: transfer to the zero address"
     );
 
-    address operator = msg.sender;
+    address operator = msgSender();
 
     for (uint256 i = 0; i < ids.length; ++i) {
       uint256 id = ids[i];
@@ -140,7 +149,7 @@ library ERC1155LogicNonCompliant {
   ) internal {
     require(to != address(0), "ERC1155: mint to the zero address");
 
-    address operator = msg.sender;
+    address operator = msgSender();
 
     ts().balances[id][to] += amount;
     emit TransferSingle(operator, address(0), to, id, amount);
@@ -157,7 +166,7 @@ library ERC1155LogicNonCompliant {
       "ERC1155: ids and amounts length mismatch"
     );
 
-    address operator = msg.sender;
+    address operator = msgSender();
 
     for (uint256 i = 0; i < ids.length; i++) {
       ts().balances[ids[i]][to] += amounts[i];
@@ -176,7 +185,7 @@ library ERC1155LogicNonCompliant {
       "ERC1155: burn from the zero address"
     );
 
-    address operator = msg.sender;
+    address operator = msgSender();
 
     uint256 fromBalance = ts().balances[id][from];
     require(
@@ -204,7 +213,7 @@ library ERC1155LogicNonCompliant {
       "ERC1155: ids and amounts length mismatch"
     );
 
-    address operator = msg.sender;
+    address operator = msgSender();
 
     for (uint256 i = 0; i < ids.length; i++) {
       uint256 id = ids[i];

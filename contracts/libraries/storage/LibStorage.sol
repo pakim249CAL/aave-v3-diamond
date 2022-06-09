@@ -47,11 +47,23 @@ library LibStorage {
     uint256 gracePeriod;
   }
 
-  struct ERC1155 {
+  struct ERC1155Storage {
     // Mapping from token ID to account balances
     mapping(uint256 => mapping(address => uint256)) balances;
     // Mapping from account to operator approvals
     mapping(address => mapping(address => bool)) operatorApprovals;
+  }
+
+  struct EIP712Storage {
+    bytes32 CACHED_DOMAIN_SEPARATOR;
+    uint256 CACHED_CHAIN_ID;
+    bytes32 HASHED_NAME;
+    bytes32 HASHED_VERSION;
+    bytes32 TYPE_HASH;
+  }
+
+  struct MetaStorage {
+    mapping(address => uint256) nonces;
   }
 
   function poolStorage()
@@ -87,10 +99,36 @@ library LibStorage {
     }
   }
 
-  function tokenStorage() internal pure returns (ERC1155 storage ts) {
-    bytes32 position = keccak256("diamond.aave.v3.token.storage");
+  function erc1155Storage()
+    internal
+    pure
+    returns (ERC1155Storage storage ts)
+  {
+    bytes32 position = keccak256("diamond.aave.v3.erc1155.storage");
     assembly {
       ts.slot := position
+    }
+  }
+
+  function eip712Storage()
+    internal
+    pure
+    returns (EIP712Storage storage es)
+  {
+    bytes32 position = keccak256("diamond.aave.v3.eip712.storage");
+    assembly {
+      es.slot := position
+    }
+  }
+
+  function metaStorage()
+    internal
+    pure
+    returns (MetaStorage storage ms)
+  {
+    bytes32 position = keccak256("diamond.aave.v3.meta.storage");
+    assembly {
+      ms.slot := position
     }
   }
 }

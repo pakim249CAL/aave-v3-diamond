@@ -19,6 +19,7 @@ import { DataTypes } from "@types/DataTypes.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { GenericLogic } from "@logic/GenericLogic.sol";
 import { OracleLogic } from "@logic/OracleLogic.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 import { SafeCast } from "@dependencies/SafeCast.sol";
 
 /**
@@ -68,6 +69,10 @@ library ValidationLogic {
     returns (LibStorage.OracleStorage storage)
   {
     return LibStorage.oracleStorage();
+  }
+
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
   }
 
   /**
@@ -389,7 +394,7 @@ library ValidationLogic {
   ) internal view {
     require(amountSent != 0, Errors.INVALID_AMOUNT);
     require(
-      amountSent != type(uint256).max || msg.sender == onBehalfOf,
+      amountSent != type(uint256).max || msgSender() == onBehalfOf,
       Errors.NO_EXPLICIT_AMOUNT_TO_REPAY_ON_BEHALF
     );
 
@@ -472,7 +477,7 @@ library ValidationLogic {
         !userConfig.isUsingAsCollateral(reserve.id) ||
           reserveCache.reserveConfiguration.getLtv() == 0 ||
           stableDebt + variableDebt >
-          IERC20(reserveCache.aTokenAddress).balanceOf(msg.sender),
+          IERC20(reserveCache.aTokenAddress).balanceOf(msgSender()),
         Errors.COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
     } else {

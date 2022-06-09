@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import { LibDiamond } from "@diamond/libraries/LibDiamond.sol";
 import { LibStorage } from "@storage/LibStorage.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 import { Strings } from "@dependencies/Strings.sol";
 
 /**
@@ -51,7 +52,7 @@ abstract contract Modifiers {
   }
 
   modifier onlyRole(bytes32 role) {
-    address sender = _msgSender();
+    address sender = msgSender();
     if (!_hasRole(role, sender))
       revert(
         string(
@@ -70,7 +71,7 @@ abstract contract Modifiers {
    * @dev Only pool admin can call functions marked by this modifier.
    **/
   modifier onlyPoolAdmin() {
-    address sender = _msgSender();
+    address sender = msgSender();
     if (!_hasRole(POOL_ADMIN_ROLE, sender))
       revert(
         string(
@@ -89,7 +90,7 @@ abstract contract Modifiers {
    * @dev Only emergency admin can call functions marked by this modifier.
    **/
   modifier onlyEmergencyAdmin() {
-    address sender = _msgSender();
+    address sender = msgSender();
     if (!_hasRole(EMERGENCY_ADMIN_ROLE, sender))
       revert(
         string(
@@ -108,7 +109,7 @@ abstract contract Modifiers {
    * @dev Only emergency or pool admin can call functions marked by this modifier.
    **/
   modifier onlyEmergencyOrPoolAdmin() {
-    address sender = _msgSender();
+    address sender = msgSender();
     if (
       !_hasRole(POOL_ADMIN_ROLE, sender) &&
       !_hasRole(EMERGENCY_ADMIN_ROLE, sender)
@@ -132,7 +133,7 @@ abstract contract Modifiers {
    * @dev Only asset listing or pool admin can call functions marked by this modifier.
    **/
   modifier onlyAssetListingOrPoolAdmins() {
-    address sender = _msgSender();
+    address sender = msgSender();
     if (
       !_hasRole(POOL_ADMIN_ROLE, sender) &&
       !_hasRole(ASSET_LISTING_ADMIN_ROLE, sender)
@@ -159,7 +160,7 @@ abstract contract Modifiers {
    * @dev Only risk or pool admin can call functions marked by this modifier.
    **/
   modifier onlyRiskOrPoolAdmins() {
-    address sender = _msgSender();
+    address sender = msgSender();
     if (
       !_hasRole(POOL_ADMIN_ROLE, sender) &&
       !_hasRole(RISK_ADMIN_ROLE, sender)
@@ -183,7 +184,7 @@ abstract contract Modifiers {
    * @dev Only bridge can call functions marked by this modifier.
    **/
   modifier onlyBridge() {
-    address sender = _msgSender();
+    address sender = msgSender();
     if (!_hasRole(BRIDGE_ROLE, sender))
       revert(
         string(
@@ -206,16 +207,11 @@ abstract contract Modifiers {
     return rs().roles[role].members[account];
   }
 
-  function _msgSender()
-    internal
-    view
-    virtual
-    returns (address payable)
-  {
-    return payable(msg.sender);
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
   }
 
-  function _msgData() internal view virtual returns (bytes memory) {
+  function _msgData() internal view returns (bytes memory) {
     this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
     return msg.data;
   }

@@ -5,6 +5,7 @@ import { LibStorage } from "@storage/LibStorage.sol";
 import { Modifiers } from "@abstract/Modifiers.sol";
 
 import { SupplyLogic } from "@logic/SupplyLogic.sol";
+
 import { Errors } from "@helpers/Errors.sol";
 
 import { DataTypes } from "@types/DataTypes.sol";
@@ -38,7 +39,7 @@ contract SupplyEntry is Modifiers {
     bytes32 permitS
   ) external {
     IERC20Permit(asset).permit(
-      msg.sender,
+      msgSender(),
       address(this),
       amount,
       deadline,
@@ -76,10 +77,10 @@ contract SupplyEntry is Modifiers {
     bool useAsCollateral
   ) external {
     SupplyLogic.executeUseReserveAsCollateral(
-      ps().usersConfig[msg.sender],
+      ps().usersConfig[msgSender()],
       asset,
       useAsCollateral,
-      ps().usersEModeCategory[msg.sender]
+      ps().usersEModeCategory[msgSender()]
     );
   }
 
@@ -92,7 +93,7 @@ contract SupplyEntry is Modifiers {
     uint256 balanceToBefore
   ) external {
     require(
-      msg.sender == ps().reserves[asset].aTokenAddress,
+      msgSender() == ps().reserves[asset].aTokenAddress,
       Errors.CALLER_NOT_ATOKEN
     );
     SupplyLogic.executeFinalizeTransfer(

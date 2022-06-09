@@ -15,6 +15,7 @@ import { DataTypes } from "@types/DataTypes.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { IsolationModeLogic } from "@logic/IsolationModeLogic.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 
 /**
  * @title BorrowLogic library
@@ -35,6 +36,10 @@ library BorrowLogic {
     returns (LibStorage.PoolStorage storage)
   {
     return LibStorage.poolStorage();
+  }
+
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
   }
 
   // See `IPool` for descriptions
@@ -224,7 +229,7 @@ library BorrowLogic {
     // Allows a user to repay with aTokens without leaving dust from interest.
     if (params.useATokens && params.amount == type(uint256).max) {
       params.amount = IAToken(reserveCache.aTokenAddress).balanceOf(
-        msg.sender
+        msgSender()
       );
     }
 
@@ -274,19 +279,19 @@ library BorrowLogic {
 
     if (params.useATokens) {
       IAToken(reserveCache.aTokenAddress).burn(
-        msg.sender,
+        msgSender(),
         reserveCache.aTokenAddress,
         paybackAmount,
         reserveCache.nextLiquidityIndex
       );
     } else {
       IERC20(params.asset).safeTransferFrom(
-        msg.sender,
+        msgSender(),
         reserveCache.aTokenAddress,
         paybackAmount
       );
       IAToken(reserveCache.aTokenAddress).handleRepayment(
-        msg.sender,
+        msgSender(),
         paybackAmount
       );
     }
@@ -294,7 +299,7 @@ library BorrowLogic {
     emit Repay(
       params.asset,
       params.onBehalfOf,
-      msg.sender,
+      msgSender(),
       paybackAmount,
       params.useATokens
     );
@@ -367,7 +372,7 @@ library BorrowLogic {
     reserve.updateState(reserveCache);
 
     (uint256 stableDebt, uint256 variableDebt) = Helpers
-      .getUserCurrentDebt(msg.sender, reserveCache);
+      .getUserCurrentDebt(msgSender(), reserveCache);
 
     ValidationLogic.validateSwapRateMode(
       reserve,
@@ -383,15 +388,15 @@ library BorrowLogic {
         reserveCache.nextTotalStableDebt,
         reserveCache.nextAvgStableBorrowRate
       ) = IStableDebtToken(reserveCache.stableDebtTokenAddress).burn(
-        msg.sender,
+        msgSender(),
         stableDebt
       );
 
       (, reserveCache.nextScaledVariableDebt) = IVariableDebtToken(
         reserveCache.variableDebtTokenAddress
       ).mint(
-          msg.sender,
-          msg.sender,
+          msgSender(),
+          msgSender(),
           stableDebt,
           reserveCache.nextVariableBorrowIndex
         );
@@ -399,7 +404,7 @@ library BorrowLogic {
       reserveCache.nextScaledVariableDebt = IVariableDebtToken(
         reserveCache.variableDebtTokenAddress
       ).burn(
-          msg.sender,
+          msgSender(),
           variableDebt,
           reserveCache.nextVariableBorrowIndex
         );
@@ -409,8 +414,8 @@ library BorrowLogic {
         reserveCache.nextTotalStableDebt,
         reserveCache.nextAvgStableBorrowRate
       ) = IStableDebtToken(reserveCache.stableDebtTokenAddress).mint(
-        msg.sender,
-        msg.sender,
+        msgSender(),
+        msgSender(),
         variableDebt,
         reserve.currentStableBorrowRate
       );
@@ -418,6 +423,6 @@ library BorrowLogic {
 
     reserve.updateInterestRates(reserveCache, asset, 0, 0);
 
-    emit SwapBorrowRateMode(asset, msg.sender, interestRateMode);
+    emit SwapBorrowRateMode(asset, msgSender(), interestRateMode);
   }
 }

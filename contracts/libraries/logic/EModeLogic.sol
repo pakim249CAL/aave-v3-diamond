@@ -12,6 +12,7 @@ import { DataTypes } from "@types/DataTypes.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { OracleLogic } from "@logic/OracleLogic.sol";
+import { MetaLogic } from "@logic/MetaLogic.sol";
 
 /**
  * @title EModeLogic library
@@ -37,6 +38,10 @@ library EModeLogic {
     return LibStorage.poolStorage();
   }
 
+  function msgSender() internal view returns (address) {
+    return MetaLogic.msgSender();
+  }
+
   /**
    * @notice Updates the user efficiency mode category
    * @dev Will revert if user is borrowing non-compatible asset or change will drop HF < HEALTH_FACTOR_LIQUIDATION_THRESHOLD
@@ -54,18 +59,18 @@ library EModeLogic {
       params.categoryId
     );
 
-    uint8 prevCategoryId = ps().usersEModeCategory[msg.sender];
-    ps().usersEModeCategory[msg.sender] = params.categoryId;
+    uint8 prevCategoryId = ps().usersEModeCategory[msgSender()];
+    ps().usersEModeCategory[msgSender()] = params.categoryId;
 
     if (prevCategoryId != 0) {
       ValidationLogic.validateHealthFactor(
         userConfig,
-        msg.sender,
+        msgSender(),
         params.categoryId,
         params.reservesCount
       );
     }
-    emit UserEModeSet(msg.sender, params.categoryId);
+    emit UserEModeSet(msgSender(), params.categoryId);
   }
 
   /**
