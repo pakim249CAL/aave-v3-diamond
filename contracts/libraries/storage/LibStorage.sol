@@ -64,6 +64,11 @@ library LibStorage {
     mapping(uint256 => mapping(address => mapping(address => uint256))) aTokenApprovals;
     mapping(uint256 => mapping(address => mapping(address => uint256))) variableBorrowAllowances;
     mapping(uint256 => mapping(address => mapping(address => uint256))) stableBorrowAllowances;
+    // Stable debt specific
+    mapping(uint256 => mapping(address => uint40)) stableDebtTimestamps;
+    mapping(uint256 => uint128) avgStableRate;
+    // Timestamp of the last update of the total supply
+    mapping(uint256 => uint40) stableDebtTotalSupplyTimestamp;
   }
 
   struct EIP712Storage {
