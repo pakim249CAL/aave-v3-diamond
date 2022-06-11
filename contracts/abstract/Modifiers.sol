@@ -38,12 +38,28 @@ abstract contract Modifiers {
     return LibStorage.poolStorage();
   }
 
+  function ts()
+    internal
+    pure
+    returns (LibStorage.TokenStorage storage)
+  {
+    return LibStorage.tokenStorage();
+  }
+
   function os()
     internal
     pure
     returns (LibStorage.OracleStorage storage)
   {
     return LibStorage.oracleStorage();
+  }
+
+  function irs()
+    internal
+    pure
+    returns (LibStorage.InterestRateStorage storage)
+  {
+    return LibStorage.interestRateStorage();
   }
 
   modifier onlyOwner() {

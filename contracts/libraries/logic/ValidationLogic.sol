@@ -524,7 +524,8 @@ library ValidationLogic {
             averageStableBorrowRate: 0,
             reserveFactor: reserveCache.reserveFactor,
             reserve: reserveAddress,
-            aToken: reserveCache.aTokenAddress
+            aToken: reserveCache.aTokenAddress,
+            reserveId: reserve.id
           })
         );
 

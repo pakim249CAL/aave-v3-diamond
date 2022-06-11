@@ -84,32 +84,6 @@ contract SupplyEntry is Modifiers {
     );
   }
 
-  function finalizeTransfer(
-    address asset,
-    address from,
-    address to,
-    uint256 amount,
-    uint256 balanceFromBefore,
-    uint256 balanceToBefore
-  ) external {
-    require(
-      msgSender() == ps().reserves[asset].aTokenAddress,
-      Errors.CALLER_NOT_ATOKEN
-    );
-    SupplyLogic.executeFinalizeTransfer(
-      DataTypes.FinalizeTransferParams({
-        asset: asset,
-        from: from,
-        to: to,
-        amount: amount,
-        balanceFromBefore: balanceFromBefore,
-        balanceToBefore: balanceToBefore,
-        reservesCount: ps().reservesCount,
-        fromEModeCategory: ps().usersEModeCategory[from]
-      })
-    );
-  }
-
   function deposit(
     address asset,
     uint256 amount,

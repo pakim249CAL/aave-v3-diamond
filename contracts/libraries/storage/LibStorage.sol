@@ -8,8 +8,6 @@ import { AggregatorInterface } from "@interfaces/AggregatorInterface.sol";
 import { ISequencerOracle } from "@interfaces/ISequencerOracle.sol";
 
 library LibStorage {
-  // Internal Structs
-
   struct RoleStorage {
     mapping(bytes32 => DataTypes.RoleData) roles;
   }
@@ -39,6 +37,10 @@ library LibStorage {
     uint16 reservesCount;
   }
 
+  struct InterestRateStorage {
+    mapping(uint256 => DataTypes.InterestRateStrategy) interestRateStrategies;
+  }
+
   struct OracleStorage {
     // Map of asset price sources (asset => priceSource)
     mapping(address => AggregatorInterface) assetsSources;
@@ -47,11 +49,21 @@ library LibStorage {
     uint256 gracePeriod;
   }
 
-  struct ERC1155Storage {
+  struct TokenStorage {
+    // Mapping from token ID to total supplies
+    mapping(uint256 => uint128) aTokenTotalSupply;
+    mapping(uint256 => uint128) variableDebtTotalSupply;
+    mapping(uint256 => uint128) stableDebtTotalSupply;
     // Mapping from token ID to account balances
-    mapping(uint256 => mapping(address => uint256)) balances;
-    // Mapping from account to operator approvals
+    mapping(uint256 => mapping(address => DataTypes.ScaledTokenBalance)) aTokenBalances;
+    mapping(uint256 => mapping(address => DataTypes.ScaledTokenBalance)) variableDebtBalances;
+    mapping(uint256 => mapping(address => DataTypes.ScaledTokenBalance)) stableDebtBalances;
+    // Mapping from account to operator approvals to expose ERC1155
     mapping(address => mapping(address => bool)) operatorApprovals;
+    // Individual token approvals
+    mapping(uint256 => mapping(address => mapping(address => uint256))) aTokenApprovals;
+    mapping(uint256 => mapping(address => mapping(address => uint256))) variableBorrowAllowances;
+    mapping(uint256 => mapping(address => mapping(address => uint256))) stableBorrowAllowances;
   }
 
   struct EIP712Storage {
@@ -66,6 +78,17 @@ library LibStorage {
     mapping(address => uint256) nonces;
   }
 
+  function roleStorage()
+    internal
+    pure
+    returns (RoleStorage storage rs)
+  {
+    bytes32 position = keccak256("diamond.aave.v3.role.storage");
+    assembly {
+      rs.slot := position
+    }
+  }
+
   function poolStorage()
     internal
     pure
@@ -77,14 +100,16 @@ library LibStorage {
     }
   }
 
-  function roleStorage()
+  function interestRateStorage()
     internal
     pure
-    returns (RoleStorage storage rs)
+    returns (InterestRateStorage storage irs)
   {
-    bytes32 position = keccak256("diamond.aave.v3.role.storage");
+    bytes32 position = keccak256(
+      "diamond.aave.v3.interest.rate.storage"
+    );
     assembly {
-      rs.slot := position
+      irs.slot := position
     }
   }
 
@@ -99,10 +124,10 @@ library LibStorage {
     }
   }
 
-  function erc1155Storage()
+  function tokenStorage()
     internal
     pure
-    returns (ERC1155Storage storage ts)
+    returns (TokenStorage storage ts)
   {
     bytes32 position = keccak256("diamond.aave.v3.erc1155.storage");
     assembly {

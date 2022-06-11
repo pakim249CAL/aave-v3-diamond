@@ -207,7 +207,8 @@ library ReserveLogic {
             .nextAvgStableBorrowRate,
           reserveFactor: reserveCache.reserveFactor,
           reserve: reserveAddress,
-          aToken: reserveCache.aTokenAddress
+          aToken: reserveCache.aTokenAddress,
+          reserveId: reserve.id
         })
       );
 

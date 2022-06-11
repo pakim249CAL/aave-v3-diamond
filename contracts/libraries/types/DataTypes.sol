@@ -2,6 +2,11 @@
 pragma solidity 0.8.14;
 
 library DataTypes {
+  struct ScaledTokenBalance {
+    uint128 balance;
+    uint128 prevIndex;
+  }
+
   struct RoleData {
     mapping(address => bool) members;
     bytes32 adminRole;
@@ -166,8 +171,6 @@ library DataTypes {
     uint256 amount;
     uint256 balanceFromBefore;
     uint256 balanceToBefore;
-    uint256 reservesCount;
-    uint8 fromEModeCategory;
   }
 
   struct FlashloanParams {
@@ -243,6 +246,7 @@ library DataTypes {
     uint256 reserveFactor;
     address reserve;
     address aToken;
+    uint256 reserveId;
   }
 
   struct InitReserveParams {
@@ -264,5 +268,44 @@ library DataTypes {
     uint256 nonce;
     address from;
     bytes functionSignature;
+  }
+
+  struct InterestRateStrategy {
+    /**
+     * @dev This constant represents the usage ratio at which the pool aims to obtain most competitive borrow rates.
+     * Expressed in ray
+     **/
+    uint256 OPTIMAL_USAGE_RATIO;
+    /**
+     * @dev This constant represents the optimal stable debt to total debt ratio of the reserve.
+     * Expressed in ray
+     */
+    uint256 OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO;
+    /**
+     * @dev This constant represents the excess usage ratio above the optimal. It's always equal to
+     * 1-optimal usage ratio. Added as a constant here for gas optimizations.
+     * Expressed in ray
+     **/
+    uint256 MAX_EXCESS_USAGE_RATIO;
+    /**
+     * @dev This constant represents the excess stable debt ratio above the optimal. It's always equal to
+     * 1-optimal stable to total debt ratio. Added as a constant here for gas optimizations.
+     * Expressed in ray
+     **/
+    uint256 MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO;
+    // Base variable borrow rate when usage rate = 0. Expressed in ray
+    uint256 baseVariableBorrowRate;
+    // Slope of the variable interest curve when usage ratio > 0 and <= OPTIMAL_USAGE_RATIO. Expressed in ray
+    uint256 variableRateSlope1;
+    // Slope of the variable interest curve when usage ratio > OPTIMAL_USAGE_RATIO. Expressed in ray
+    uint256 variableRateSlope2;
+    // Slope of the stable interest curve when usage ratio > 0 and <= OPTIMAL_USAGE_RATIO. Expressed in ray
+    uint256 stableRateSlope1;
+    // Slope of the stable interest curve when usage ratio > OPTIMAL_USAGE_RATIO. Expressed in ray
+    uint256 stableRateSlope2;
+    // Premium on top of `_variableRateSlope1` for base stable borrowing rate
+    uint256 baseStableRateOffset;
+    // Additional premium applied to stable rate when stable debt surpass `OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO`
+    uint256 stableRateExcessOffset;
   }
 }

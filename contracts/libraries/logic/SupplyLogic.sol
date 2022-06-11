@@ -247,8 +247,8 @@ library SupplyLogic {
             fromConfig,
             params.asset,
             params.from,
-            params.reservesCount,
-            params.fromEModeCategory
+            ps().reservesCount,
+            ps().usersEModeCategory[params.from]
           );
         }
         if (params.balanceFromBefore == params.amount) {

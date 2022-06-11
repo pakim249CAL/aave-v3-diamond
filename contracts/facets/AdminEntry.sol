@@ -9,6 +9,8 @@ import { OracleLogic } from "@logic/OracleLogic.sol";
 
 import { Errors } from "@helpers/Errors.sol";
 
+import { WadRayMath } from "@math/WadRayMath.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
 import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
 
@@ -140,5 +142,45 @@ contract AdminEntry is Modifiers {
     onlyPoolAdmin
   {
     OracleLogic.setGracePeriod(newGracePeriod);
+  }
+
+  function setInterestRateStrategy(
+    uint256 reserveId,
+    uint256 optimalUsageRatio,
+    uint256 baseVariableBorrowRate,
+    uint256 variableRateSlope1,
+    uint256 variableRateSlope2,
+    uint256 stableRateSlope1,
+    uint256 stableRateSlope2,
+    uint256 baseStableRateOffset,
+    uint256 stableRateExcessOffset,
+    uint256 optimalStableToTotalDebtRatio
+  ) external onlyPoolAdmin {
+    DataTypes.InterestRateStrategy storage strategy = irs()
+      .interestRateStrategies[reserveId];
+    require(
+      WadRayMath.RAY >= optimalUsageRatio,
+      Errors.INVALID_OPTIMAL_USAGE_RATIO
+    );
+    require(
+      WadRayMath.RAY >= optimalStableToTotalDebtRatio,
+      Errors.INVALID_OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO
+    );
+    strategy.OPTIMAL_USAGE_RATIO = optimalUsageRatio;
+    strategy.MAX_EXCESS_USAGE_RATIO =
+      WadRayMath.RAY -
+      optimalUsageRatio;
+    strategy
+      .OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO = optimalStableToTotalDebtRatio;
+    strategy.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO =
+      WadRayMath.RAY -
+      optimalStableToTotalDebtRatio;
+    strategy.baseVariableBorrowRate = baseVariableBorrowRate;
+    strategy.variableRateSlope1 = variableRateSlope1;
+    strategy.variableRateSlope2 = variableRateSlope2;
+    strategy.stableRateSlope1 = stableRateSlope1;
+    strategy.stableRateSlope2 = stableRateSlope2;
+    strategy.baseStableRateOffset = baseStableRateOffset;
+    strategy.stableRateExcessOffset = stableRateExcessOffset;
   }
 }
