@@ -328,6 +328,115 @@ library TokenLogic {
     }
   }
 
+  function variableDebtTokenBurn(
+    address _from,
+    uint256 _reserveId,
+    uint256 _amount,
+    uint256 _index
+  ) internal returns (uint256) {
+    _burnScaled(
+      ts().variableDebtBalances,
+      ts().variableDebtTotalSupply,
+      _from,
+      _reserveId,
+      _amount,
+      _index
+    );
+    return ts().variableDebtTotalSupply[_reserveId];
+  }
+
+  function stableDebtTokenBurn(
+    address _from,
+    uint256 _reserveId,
+    uint256 _amount
+  ) internal returns (uint256, uint256) {
+    (
+      ,
+      uint256 currentBalance,
+      uint256 balanceIncrease
+    ) = _calculateStableDebtBalanceIncrease(_reserveId, _from);
+
+    uint256 previousSupply = _calcTotalSupplyStableDebt(
+      _reserveId,
+      ts().avgStableRate[_reserveId]
+    );
+    uint256 nextAvgStableRate = 0;
+    uint256 nextSupply = 0;
+    uint256 userStableRate = ts()
+    .stableDebtBalances[_reserveId][_from].prevIndex;
+
+    // Since the total supply and each single user debt accrue separately,
+    // there might be accumulation errors so that the last borrower repaying
+    // might actually try to repay more than the available debt supply.
+    // In this case we simply set the total supply and the avg stable rate to 0
+    if (previousSupply <= _amount) {
+      ts().avgStableRate[_reserveId] = 0;
+      ts().stableDebtTotalSupply[_reserveId] = 0;
+    } else {
+      nextSupply = ts().stableDebtTotalSupply[
+        _reserveId
+      ] = (previousSupply - _amount).toUint128();
+      uint256 firstTerm = uint256(ts().avgStableRate[_reserveId])
+        .rayMul(previousSupply.wadToRay());
+      uint256 secondTerm = userStableRate.rayMul(_amount.wadToRay());
+
+      // For the same reason described above, when the last user is repaying it might
+      // happen that user rate * user balance > avg rate * total supply. In that case,
+      // we simply set the avg rate to 0
+      if (secondTerm >= firstTerm) {
+        nextAvgStableRate = ts().stableDebtTotalSupply[
+          _reserveId
+        ] = ts().avgStableRate[_reserveId] = 0;
+      } else {
+        nextAvgStableRate = ts().avgStableRate[_reserveId] = (
+          (firstTerm - secondTerm).rayDiv(nextSupply.wadToRay())
+        ).toUint128();
+      }
+    }
+
+    if (_amount == currentBalance) {
+      ts().stableDebtBalances[_reserveId][_from].prevIndex = 0;
+      ts().stableDebtTimestamps[_reserveId][_from] = 0;
+    } else {
+      //solium-disable-next-line
+      ts().stableDebtTimestamps[_reserveId][_from] = uint40(
+        block.timestamp
+      );
+    }
+    //solium-disable-next-line
+    ts().stableDebtTotalSupplyTimestamp[_reserveId] = uint40(
+      block.timestamp
+    );
+
+    if (balanceIncrease > _amount) {
+      uint256 amountToMint = balanceIncrease - _amount;
+      ts()
+      .stableDebtBalances[_reserveId][_from].balance += amountToMint
+        .toUint128();
+      emit TransferSingle(
+        msgSender(),
+        address(0),
+        _from,
+        _reserveId,
+        amountToMint
+      );
+    } else {
+      uint256 amountToBurn = _amount - balanceIncrease;
+      ts()
+      .stableDebtBalances[_reserveId][_from].balance -= amountToBurn
+        .toUint128();
+      emit TransferSingle(
+        msgSender(),
+        _from,
+        address(0),
+        _reserveId,
+        amountToBurn
+      );
+    }
+
+    return (nextSupply, nextAvgStableRate);
+  }
+
   /**
    * @notice Implements the basic logic to burn a scaled balance token.
    * @dev In some instances, a burn transaction will emit a mint event
