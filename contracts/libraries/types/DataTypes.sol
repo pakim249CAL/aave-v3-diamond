@@ -29,14 +29,6 @@ library DataTypes {
     uint40 lastUpdateTimestamp;
     //the id of the reserve. Represents the position in the list of the active reserves
     uint16 id;
-    //aToken address
-    address aTokenAddress;
-    //stableDebtToken address
-    address stableDebtTokenAddress;
-    //variableDebtToken address
-    address variableDebtTokenAddress;
-    //address of the interest rate strategy
-    address interestRateStrategyAddress;
     //the current treasury balance, scaled
     uint128 accruedToTreasury;
     //the outstanding unbacked aTokens minted through the bridging feature
@@ -108,11 +100,9 @@ library DataTypes {
     uint256 currVariableBorrowRate;
     uint256 reserveFactor;
     ReserveConfigurationMap reserveConfiguration;
-    address aTokenAddress;
-    address stableDebtTokenAddress;
-    address variableDebtTokenAddress;
     uint40 reserveLastUpdateTimestamp;
     uint40 stableDebtLastUpdateTimestamp;
+    uint256 id;
   }
 
   struct ExecuteLiquidationCallParams {
@@ -245,18 +235,25 @@ library DataTypes {
     uint256 averageStableBorrowRate;
     uint256 reserveFactor;
     address reserve;
-    address aToken;
     uint256 reserveId;
   }
 
   struct InitReserveParams {
     address asset;
-    address aTokenAddress;
-    address stableDebtAddress;
-    address variableDebtAddress;
-    address interestRateStrategyAddress;
     uint16 reservesCount;
     uint16 maxNumberReserves;
+  }
+
+  struct InitInterestRateParams {
+    uint256 optimalUsageRatio;
+    uint256 baseVariableBorrowRate;
+    uint256 variableRateSlope1;
+    uint256 variableRateSlope2;
+    uint256 stableRateSlope1;
+    uint256 stableRateSlope2;
+    uint256 baseStableRateOffset;
+    uint256 stableRateExcessOffset;
+    uint256 optimalStableToTotalDebtRatio;
   }
 
   /*

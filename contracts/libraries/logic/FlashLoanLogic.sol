@@ -19,6 +19,7 @@ import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { BorrowLogic } from "@logic/BorrowLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { MetaLogic } from "@logic/MetaLogic.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 
 /**
  * @title FlashLoanLogic library
@@ -106,11 +107,10 @@ library FlashLoanLogic {
       vars.totalPremiums[vars.i] = vars.currentAmount.percentMul(
         vars.flashloanPremiumTotal
       );
-      IAToken(ps().reserves[params.assets[vars.i]].aTokenAddress)
-        .transferUnderlyingTo(
-          params.receiverAddress,
-          vars.currentAmount
-        );
+      IERC20(params.assets[vars.i]).safeTransfer(
+        params.receiverAddress,
+        vars.currentAmount
+      );
     }
 
     require(
@@ -208,7 +208,7 @@ library FlashLoanLogic {
     uint256 totalPremium = params.amount.percentMul(
       params.flashLoanPremiumTotal
     );
-    IAToken(reserve.aTokenAddress).transferUnderlyingTo(
+    IERC20(params.asset).safeTransfer(
       params.receiverAddress,
       params.amount
     );
@@ -257,7 +257,7 @@ library FlashLoanLogic {
     reserve.updateState(reserveCache);
     reserveCache.nextLiquidityIndex = reserve
       .cumulateToLiquidityIndex(
-        IERC20(reserveCache.aTokenAddress).totalSupply(),
+        TokenLogic.totalSupplyAToken(reserveCache.id),
         premiumToLP
       );
 
@@ -274,14 +274,14 @@ library FlashLoanLogic {
 
     IERC20(params.asset).safeTransferFrom(
       params.receiverAddress,
-      reserveCache.aTokenAddress,
+      address(this),
       amountPlusPremium
     );
 
-    IAToken(reserveCache.aTokenAddress).handleRepayment(
-      params.receiverAddress,
-      amountPlusPremium
-    );
+    // IAToken(reserveCache.aTokenAddress).handleRepayment(
+    //   params.receiverAddress,
+    //   amountPlusPremium
+    // );
 
     emit FlashLoan(
       params.receiverAddress,

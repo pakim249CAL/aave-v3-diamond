@@ -7,7 +7,6 @@ import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
 
 import { IERC20 } from "@interfaces/IERC20.sol";
-import { IAToken } from "@interfaces/IAToken.sol";
 
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
 
@@ -21,6 +20,7 @@ import { PercentageMath } from "@math/PercentageMath.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { MetaLogic } from "@logic/MetaLogic.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 
 /**
  * @title SupplyLogic library
@@ -67,6 +67,14 @@ library SupplyLogic {
     return LibStorage.poolStorage();
   }
 
+  function ts()
+    internal
+    pure
+    returns (LibStorage.TokenStorage storage)
+  {
+    return LibStorage.tokenStorage();
+  }
+
   function msgSender() internal view returns (address) {
     return MetaLogic.msgSender();
   }
@@ -102,13 +110,13 @@ library SupplyLogic {
 
     IERC20(params.asset).safeTransferFrom(
       msgSender(),
-      reserveCache.aTokenAddress,
+      address(this),
       params.amount
     );
 
-    bool isFirstSupply = IAToken(reserveCache.aTokenAddress).mint(
-      msgSender(),
+    bool isFirstSupply = TokenLogic.aTokenMint(
       params.onBehalfOf,
+      reserve.id,
       params.amount,
       reserveCache.nextLiquidityIndex
     );
@@ -158,9 +166,9 @@ library SupplyLogic {
 
     reserve.updateState(reserveCache);
 
-    uint256 userBalance = IAToken(reserveCache.aTokenAddress)
-      .scaledBalanceOf(msgSender())
-      .rayMul(reserveCache.nextLiquidityIndex);
+    uint256 userBalance = uint256(
+      ts().aTokenBalances[reserveCache.id][msgSender()].balance
+    ).rayMul(reserveCache.nextLiquidityIndex);
 
     uint256 amountToWithdraw = params.amount;
 
@@ -181,9 +189,10 @@ library SupplyLogic {
       amountToWithdraw
     );
 
-    IAToken(reserveCache.aTokenAddress).burn(
+    TokenLogic.aTokenBurn(
       msgSender(),
       params.to,
+      reserveCache.id,
       amountToWithdraw,
       reserveCache.nextLiquidityIndex
     );
@@ -299,8 +308,10 @@ library SupplyLogic {
     DataTypes.ReserveData storage reserve = ps().reserves[asset];
     DataTypes.ReserveCache memory reserveCache = reserve.cache();
 
-    uint256 userBalance = IERC20(reserveCache.aTokenAddress)
-      .balanceOf(msgSender());
+    uint256 userBalance = TokenLogic.balanceOfAToken(
+      reserveCache.id,
+      msgSender()
+    );
 
     ValidationLogic.validateSetUseReserveAsCollateral(
       reserveCache,

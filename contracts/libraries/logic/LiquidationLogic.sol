@@ -229,14 +229,14 @@ library LiquidationLogic {
     // Transfers the debt asset being repaid to the aToken, where the liquidity is kept
     IERC20(params.debtAsset).safeTransferFrom(
       msgSender(),
-      vars.debtReserveCache.aTokenAddress,
+      address(this),
       vars.actualDebtToLiquidate
     );
 
-    IAToken(vars.debtReserveCache.aTokenAddress).handleRepayment(
-      msgSender(),
-      vars.actualDebtToLiquidate
-    );
+    // IAToken(vars.debtReserveCache.aTokenAddress).handleRepayment(
+    //   msgSender(),
+    //   vars.actualDebtToLiquidate
+    // );
 
     emit LiquidationCall(
       params.collateralAsset,

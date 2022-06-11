@@ -3,6 +3,7 @@ pragma solidity 0.8.14;
 
 import { IERC20 } from "@interfaces/IERC20.sol";
 import { DataTypes } from "@types/DataTypes.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 
 /**
  * @title Helpers library
@@ -21,8 +22,8 @@ library Helpers {
     DataTypes.ReserveCache memory reserveCache
   ) internal view returns (uint256, uint256) {
     return (
-      IERC20(reserveCache.stableDebtTokenAddress).balanceOf(user),
-      IERC20(reserveCache.variableDebtTokenAddress).balanceOf(user)
+      TokenLogic.balanceOfStableDebt(reserveCache.id, user),
+      TokenLogic.balanceOfVariableDebt(reserveCache.id, user)
     );
   }
 }

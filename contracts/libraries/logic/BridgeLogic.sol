@@ -15,6 +15,7 @@ import { Errors } from "@helpers/Errors.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { MetaLogic } from "@logic/MetaLogic.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 
 library BridgeLogic {
   using ReserveLogic for DataTypes.ReserveCache;
@@ -99,9 +100,9 @@ library BridgeLogic {
 
     reserve.updateInterestRates(reserveCache, asset, 0, 0);
 
-    bool isFirstSupply = IAToken(reserveCache.aTokenAddress).mint(
-      msgSender(),
+    bool isFirstSupply = TokenLogic.aTokenMint(
       onBehalfOf,
+      reserveCache.id,
       amount,
       reserveCache.nextLiquidityIndex
     );
@@ -155,7 +156,7 @@ library BridgeLogic {
 
     reserveCache.nextLiquidityIndex = reserve
       .cumulateToLiquidityIndex(
-        IERC20(reserveCache.aTokenAddress).totalSupply(),
+        TokenLogic.totalSupplyAToken(reserveCache.id),
         feeToLP
       );
 
@@ -166,11 +167,7 @@ library BridgeLogic {
     reserve.unbacked -= backingAmount.toUint128();
     reserve.updateInterestRates(reserveCache, asset, added, 0);
 
-    IERC20(asset).safeTransferFrom(
-      msgSender(),
-      reserveCache.aTokenAddress,
-      added
-    );
+    IERC20(asset).safeTransferFrom(msgSender(), address(this), added);
 
     emit BackUnbacked(asset, msgSender(), backingAmount, fee);
   }

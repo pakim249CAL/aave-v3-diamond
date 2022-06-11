@@ -23,21 +23,11 @@ contract AdminEntry is Modifiers {
     PoolLogic.executeMintToTreasury(assets);
   }
 
-  function initReserve(
-    address asset,
-    address aTokenAddress,
-    address stableDebtAddress,
-    address variableDebtAddress,
-    address interestRateStrategyAddress
-  ) external onlyPoolAdmin {
+  function initReserve(address asset) external onlyPoolAdmin {
     if (
       PoolLogic.executeInitReserve(
         DataTypes.InitReserveParams({
           asset: asset,
-          aTokenAddress: aTokenAddress,
-          stableDebtAddress: stableDebtAddress,
-          variableDebtAddress: variableDebtAddress,
-          interestRateStrategyAddress: interestRateStrategyAddress,
           reservesCount: ps().reservesCount,
           maxNumberReserves: ReserveConfiguration.MAX_RESERVES_COUNT
         })
@@ -49,20 +39,6 @@ contract AdminEntry is Modifiers {
 
   function dropReserve(address asset) external onlyPoolAdmin {
     PoolLogic.executeDropReserve(asset);
-  }
-
-  function setReserveInterestRateStrategyAddress(
-    address asset,
-    address rateStrategyAddress
-  ) external onlyPoolAdmin {
-    require(asset != address(0), Errors.ZERO_ADDRESS_NOT_VALID);
-    require(
-      ps().reserves[asset].id != 0 || ps().reservesList[0] == asset,
-      Errors.ASSET_NOT_LISTED
-    );
-    ps()
-      .reserves[asset]
-      .interestRateStrategyAddress = rateStrategyAddress;
   }
 
   function setConfiguration(
