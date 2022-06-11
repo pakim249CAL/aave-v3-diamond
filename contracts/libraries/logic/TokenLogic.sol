@@ -64,6 +64,84 @@ library TokenLogic {
     return MetaLogic.msgSender();
   }
 
+  function totalSupplyAToken(uint256 _reserveId)
+    internal
+    view
+    returns (uint256)
+  {
+    DataTypes.ReserveData storage reserve = ps().reserves[
+      ps().reservesList[_reserveId]
+    ];
+    return
+      uint256(ts().aTokenTotalSupply[_reserveId]).rayMul(
+        ReserveLogic.getNormalizedIncome(reserve)
+      );
+  }
+
+  function totalSupplyVariableDebt(uint256 _reserveId)
+    internal
+    view
+    returns (uint256)
+  {
+    DataTypes.ReserveData storage reserve = ps().reserves[
+      ps().reservesList[_reserveId]
+    ];
+    return
+      uint256(ts().variableDebtTotalSupply[_reserveId]).rayMul(
+        ReserveLogic.getNormalizedDebt(reserve)
+      );
+  }
+
+  /**
+   * @notice Calculates the total supply
+   * @return The debt balance of the user since the last burn/mint action
+   **/
+  function totalSupplyStableDebt(uint256 _reserveId)
+    internal
+    view
+    returns (uint256)
+  {
+    uint256 principalSupply = ts().stableDebtTotalSupply[_reserveId];
+
+    if (principalSupply == 0) {
+      return 0;
+    }
+
+    uint256 cumulatedInterest = MathUtils.calculateCompoundedInterest(
+      ts().avgStableRate[_reserveId],
+      ts().stableDebtTotalSupplyTimestamp[_reserveId]
+    );
+
+    return principalSupply.rayMul(cumulatedInterest);
+  }
+
+  function balanceOfAToken(uint256 _reserveId, address _user)
+    internal
+    view
+    returns (uint256)
+  {
+    return
+      uint256(ts().aTokenBalances[_reserveId][_user].balance).rayMul(
+        ReserveLogic.getNormalizedIncome(
+          ps().reserves[ps().reservesList[_reserveId]]
+        )
+      );
+  }
+
+  function balanceOfVariableDebt(uint256 _reserveId, address _user)
+    internal
+    view
+    returns (uint256)
+  {
+    return
+      uint256(ts().variableDebtBalances[_reserveId][_user].balance)
+        .rayMul(
+          ReserveLogic.getNormalizedDebt(
+            ps().reserves[ps().reservesList[_reserveId]]
+          )
+        );
+  }
+
   function balanceOfStableDebt(uint256 _reserveId, address _user)
     internal
     view
@@ -82,6 +160,25 @@ library TokenLogic {
       ts().stableDebtTimestamps[_reserveId][_user]
     );
     return accountBalance.rayMul(cumulatedInterest);
+  }
+
+  function getSupplyDataStableDebt(uint256 _reserveId)
+    internal
+    view
+    returns (
+      uint256,
+      uint256,
+      uint256,
+      uint40
+    )
+  {
+    uint256 avgRate = ts().avgStableRate[_reserveId];
+    return (
+      ts().stableDebtTotalSupply[_reserveId],
+      totalSupplyStableDebt(_reserveId),
+      avgRate,
+      ts().stableDebtTotalSupplyTimestamp[_reserveId]
+    );
   }
 
   function aTokenTransferFrom(
@@ -142,15 +239,16 @@ library TokenLogic {
     uint256 _reserveId,
     uint256 _amount,
     uint256 _index
-  ) internal {
-    _mintScaled(
-      ts().aTokenBalances,
-      ts().aTokenTotalSupply,
-      _onBehalfOf,
-      _reserveId,
-      _amount,
-      _index
-    );
+  ) internal returns (bool) {
+    return
+      _mintScaled(
+        ts().aTokenBalances,
+        ts().aTokenTotalSupply,
+        _onBehalfOf,
+        _reserveId,
+        _amount,
+        _index
+      );
   }
 
   function variableDebtTokenMint(
@@ -214,10 +312,7 @@ library TokenLogic {
     ) = _calculateStableDebtBalanceIncrease(_reserveId, _onBehalfOf);
 
     vars.currentAvgStableRate = ts().avgStableRate[_reserveId];
-    vars.previousSupply = _calcTotalSupplyStableDebt(
-      _reserveId,
-      vars.currentAvgStableRate
-    );
+    vars.previousSupply = totalSupplyStableDebt(_reserveId);
     vars.nextSupply = ts().stableDebtTotalSupply[_reserveId] = (vars
       .previousSupply + _amount).toUint128();
 
@@ -356,10 +451,7 @@ library TokenLogic {
       uint256 balanceIncrease
     ) = _calculateStableDebtBalanceIncrease(_reserveId, _from);
 
-    uint256 previousSupply = _calcTotalSupplyStableDebt(
-      _reserveId,
-      ts().avgStableRate[_reserveId]
-    );
+    uint256 previousSupply = totalSupplyStableDebt(_reserveId);
     uint256 nextAvgStableRate = 0;
     uint256 nextSupply = 0;
     uint256 userStableRate = ts()
@@ -509,28 +601,5 @@ library TokenLogic {
       newPrincipalBalance,
       newPrincipalBalance - previousPrincipalBalance
     );
-  }
-
-  /**
-   * @notice Calculates the total supply
-   * @param avgRate The average rate at which the total supply increases
-   * @return The debt balance of the user since the last burn/mint action
-   **/
-  function _calcTotalSupplyStableDebt(
-    uint256 _reserveId,
-    uint256 avgRate
-  ) internal view returns (uint256) {
-    uint256 principalSupply = ts().stableDebtTotalSupply[_reserveId];
-
-    if (principalSupply == 0) {
-      return 0;
-    }
-
-    uint256 cumulatedInterest = MathUtils.calculateCompoundedInterest(
-      avgRate,
-      ts().stableDebtTotalSupplyTimestamp[_reserveId]
-    );
-
-    return principalSupply.rayMul(cumulatedInterest);
   }
 }

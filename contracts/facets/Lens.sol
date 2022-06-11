@@ -7,6 +7,7 @@ import { Modifiers } from "@abstract/Modifiers.sol";
 import { PoolLogic } from "@logic/PoolLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { OracleLogic } from "@logic/OracleLogic.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 
 import { DataTypes } from "@types/DataTypes.sol";
 import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
@@ -256,29 +257,6 @@ contract Lens is Modifiers {
   }
 
   /**
-   * @notice Returns the list of the existing ATokens in the pool.
-   * @return The list of ATokens, pairs of symbols and addresses
-   */
-  function getAllATokens()
-    external
-    view
-    returns (TokenData[] memory)
-  {
-    address[] memory reserves = getReservesList();
-    TokenData[] memory aTokens = new TokenData[](reserves.length);
-    for (uint256 i = 0; i < reserves.length; i++) {
-      DataTypes.ReserveData memory reserveData = ps().reserves[
-        reserves[i]
-      ];
-      aTokens[i] = TokenData({
-        symbol: IERC20Detailed(reserveData.aTokenAddress).symbol(),
-        tokenAddress: reserveData.aTokenAddress
-      });
-    }
-    return aTokens;
-  }
-
-  /**
    * @notice Returns the configuration data of the reserve
    * @dev Not returning borrow and supply caps for compatibility, nor pause flag
    * @param asset The address of the underlying asset of the reserve
@@ -473,14 +451,13 @@ contract Lens is Modifiers {
     return (
       reserve.unbacked,
       reserve.accruedToTreasury,
-      IERC20Detailed(reserve.aTokenAddress).totalSupply(),
-      IERC20Detailed(reserve.stableDebtTokenAddress).totalSupply(),
-      IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply(),
+      TokenLogic.totalSupplyAToken(reserve.id),
+      TokenLogic.totalSupplyStableDebt(reserve.id),
+      TokenLogic.totalSupplyVariableDebt(reserve.id),
       reserve.currentLiquidityRate,
       reserve.currentVariableBorrowRate,
       reserve.currentStableBorrowRate,
-      IStableDebtToken(reserve.stableDebtTokenAddress)
-        .getAverageStableRate(),
+      ts().avgStableRate[reserve.id],
       reserve.liquidityIndex,
       reserve.variableBorrowIndex,
       reserve.lastUpdateTimestamp
@@ -498,7 +475,7 @@ contract Lens is Modifiers {
     returns (uint256)
   {
     DataTypes.ReserveData memory reserve = getReserveData(asset);
-    return IERC20Detailed(reserve.aTokenAddress).totalSupply();
+    return TokenLogic.totalSupplyAToken(reserve.id);
   }
 
   /**
@@ -513,8 +490,8 @@ contract Lens is Modifiers {
   {
     DataTypes.ReserveData memory reserve = getReserveData(asset);
     return
-      IERC20Detailed(reserve.stableDebtTokenAddress).totalSupply() +
-      IERC20Detailed(reserve.variableDebtTokenAddress).totalSupply();
+      TokenLogic.totalSupplyStableDebt(reserve.id) +
+      TokenLogic.totalSupplyVariableDebt(reserve.id);
   }
 
   /**
@@ -552,68 +529,31 @@ contract Lens is Modifiers {
     DataTypes.UserConfigurationMap
       memory userConfig = getUserConfiguration(user);
 
-    currentATokenBalance = IERC20Detailed(reserve.aTokenAddress)
-      .balanceOf(user);
-    currentVariableDebt = IERC20Detailed(
-      reserve.variableDebtTokenAddress
-    ).balanceOf(user);
-    currentStableDebt = IERC20Detailed(reserve.stableDebtTokenAddress)
-      .balanceOf(user);
-    principalStableDebt = IStableDebtToken(
-      reserve.stableDebtTokenAddress
-    ).principalBalanceOf(user);
-    scaledVariableDebt = IVariableDebtToken(
-      reserve.variableDebtTokenAddress
-    ).scaledBalanceOf(user);
+    currentATokenBalance = TokenLogic.balanceOfAToken(
+      reserve.id,
+      user
+    );
+    currentVariableDebt = TokenLogic.balanceOfVariableDebt(
+      reserve.id,
+      user
+    );
+    currentStableDebt = TokenLogic.balanceOfStableDebt(
+      reserve.id,
+      user
+    );
+
+    principalStableDebt = ts()
+    .stableDebtBalances[reserve.id][user].balance;
+    scaledVariableDebt = ts()
+    .variableDebtBalances[reserve.id][user].balance;
     liquidityRate = reserve.currentLiquidityRate;
-    stableBorrowRate = IStableDebtToken(
-      reserve.stableDebtTokenAddress
-    ).getUserStableRate(user);
-    stableRateLastUpdated = IStableDebtToken(
-      reserve.stableDebtTokenAddress
-    ).getUserLastUpdated(user);
+    stableBorrowRate = ts()
+    .stableDebtBalances[reserve.id][user].prevIndex;
+    stableRateLastUpdated = ts().stableDebtTimestamps[reserve.id][
+      user
+    ];
     usageAsCollateralEnabled = userConfig.isUsingAsCollateral(
       reserve.id
     );
-  }
-
-  /**
-   * @notice Returns the token addresses of the reserve
-   * @param asset The address of the underlying asset of the reserve
-   * @return aTokenAddress The AToken address of the reserve
-   * @return stableDebtTokenAddress The StableDebtToken address of the reserve
-   * @return variableDebtTokenAddress The VariableDebtToken address of the reserve
-   */
-  function getReserveTokensAddresses(address asset)
-    external
-    view
-    returns (
-      address aTokenAddress,
-      address stableDebtTokenAddress,
-      address variableDebtTokenAddress
-    )
-  {
-    DataTypes.ReserveData memory reserve = getReserveData(asset);
-
-    return (
-      reserve.aTokenAddress,
-      reserve.stableDebtTokenAddress,
-      reserve.variableDebtTokenAddress
-    );
-  }
-
-  /**
-   * @notice Returns the address of the Interest Rate strategy
-   * @param asset The address of the underlying asset of the reserve
-   * @return irStrategyAddress The address of the Interest Rate strategy
-   */
-  function getInterestRateStrategyAddress(address asset)
-    external
-    view
-    returns (address irStrategyAddress)
-  {
-    DataTypes.ReserveData memory reserve = getReserveData(asset);
-
-    return (reserve.interestRateStrategyAddress);
   }
 }

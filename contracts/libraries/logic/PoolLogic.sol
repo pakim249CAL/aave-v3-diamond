@@ -5,7 +5,6 @@ import { LibStorage } from "@storage/LibStorage.sol";
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
 import { Address } from "@dependencies/Address.sol";
 import { IERC20 } from "@interfaces/IERC20.sol";
-import { IAToken } from "@interfaces/IAToken.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { Errors } from "@helpers/Errors.sol";
 import { WadRayMath } from "@math/WadRayMath.sol";
@@ -13,6 +12,7 @@ import { DataTypes } from "@types/DataTypes.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { GenericLogic } from "@logic/GenericLogic.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 
 /**
  * @title PoolLogic library
@@ -52,12 +52,7 @@ library PoolLogic {
     DataTypes.InitReserveParams memory params
   ) internal returns (bool) {
     require(Address.isContract(params.asset), Errors.NOT_CONTRACT);
-    ps().reserves[params.asset].init(
-      params.aTokenAddress,
-      params.stableDebtAddress,
-      params.variableDebtAddress,
-      params.interestRateStrategyAddress
-    );
+    ps().reserves[params.asset].init();
 
     bool reserveAlreadyAdded = ps().reserves[params.asset].id != 0 ||
       ps().reservesList[0] == params.asset;
@@ -119,7 +114,9 @@ library PoolLogic {
         uint256 amountToMint = accruedToTreasury.rayMul(
           normalizedIncome
         );
-        IAToken(reserve.aTokenAddress).mintToTreasury(
+        TokenLogic.aTokenMint(
+          address(this),
+          reserve.id,
           amountToMint,
           normalizedIncome
         );

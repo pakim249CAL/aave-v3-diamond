@@ -18,8 +18,10 @@ import { PercentageMath } from "@math/PercentageMath.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { GenericLogic } from "@logic/GenericLogic.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 import { OracleLogic } from "@logic/OracleLogic.sol";
 import { MetaLogic } from "@logic/MetaLogic.sol";
+import { InterestRateLogic } from "@logic/InterestRateLogic.sol";
 import { SafeCast } from "@dependencies/SafeCast.sol";
 
 /**
@@ -71,6 +73,14 @@ library ValidationLogic {
     return LibStorage.oracleStorage();
   }
 
+  function ts()
+    internal
+    pure
+    returns (LibStorage.TokenStorage storage)
+  {
+    return LibStorage.tokenStorage();
+  }
+
   function msgSender() internal view returns (address) {
     return MetaLogic.msgSender();
   }
@@ -98,9 +108,9 @@ library ValidationLogic {
       .getSupplyCap();
     require(
       supplyCap == 0 ||
-        (IAToken(reserveCache.aTokenAddress)
-          .scaledTotalSupply()
-          .rayMul(reserveCache.nextLiquidityIndex) + amount) <=
+        (uint256(ts().aTokenTotalSupply[reserveCache.id]).rayMul(
+          reserveCache.nextLiquidityIndex
+        ) + amount) <=
         supplyCap *
           (10**reserveCache.reserveConfiguration.getDecimals()),
       Errors.SUPPLY_CAP_EXCEEDED
@@ -330,14 +340,15 @@ library ValidationLogic {
         ) ||
           params.reserveCache.reserveConfiguration.getLtv() == 0 ||
           params.amount >
-          IERC20(params.reserveCache.aTokenAddress).balanceOf(
+          TokenLogic.balanceOfAToken(
+            ps().reserves[params.asset].id,
             params.userAddress
           ),
         Errors.COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
 
       vars.availableLiquidity = IERC20(params.asset).balanceOf(
-        params.reserveCache.aTokenAddress
+        address(this)
       );
 
       //calculate the max available loan size in stable rate mode as a percentage of the
@@ -404,13 +415,12 @@ library ValidationLogic {
     require(isActive, Errors.RESERVE_INACTIVE);
     require(!isPaused, Errors.RESERVE_PAUSED);
 
-    uint256 variableDebtPreviousIndex = IScaledBalanceToken(
-      reserveCache.variableDebtTokenAddress
-    ).getPreviousIndex(onBehalfOf);
+    uint256 variableDebtPreviousIndex = ts()
+    .variableDebtBalances[reserveCache.id][onBehalfOf].prevIndex;
 
-    uint40 stableRatePreviousTimestamp = IStableDebtToken(
-      reserveCache.stableDebtTokenAddress
-    ).getUserLastUpdated(onBehalfOf);
+    uint40 stableRatePreviousTimestamp = ts().stableDebtTimestamps[
+      reserveCache.id
+    ][onBehalfOf];
 
     require(
       (stableRatePreviousTimestamp < uint40(block.timestamp) &&
@@ -477,7 +487,7 @@ library ValidationLogic {
         !userConfig.isUsingAsCollateral(reserve.id) ||
           reserveCache.reserveConfiguration.getLtv() == 0 ||
           stableDebt + variableDebt >
-          IERC20(reserveCache.aTokenAddress).balanceOf(msgSender()),
+          TokenLogic.balanceOfAToken(reserve.id, msgSender()),
         Errors.COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
     } else {
@@ -504,30 +514,23 @@ library ValidationLogic {
     require(isActive, Errors.RESERVE_INACTIVE);
     require(!isPaused, Errors.RESERVE_PAUSED);
 
-    uint256 totalDebt = IERC20(reserveCache.stableDebtTokenAddress)
-      .totalSupply() +
-      IERC20(reserveCache.variableDebtTokenAddress).totalSupply();
-
-    (
-      uint256 liquidityRateVariableDebtOnly,
-      ,
-
-    ) = IReserveInterestRateStrategy(
-        reserve.interestRateStrategyAddress
-      ).calculateInterestRates(
-          DataTypes.CalculateInterestRatesParams({
-            unbacked: reserve.unbacked,
-            liquidityAdded: 0,
-            liquidityTaken: 0,
-            totalStableDebt: 0,
-            totalVariableDebt: totalDebt,
-            averageStableBorrowRate: 0,
-            reserveFactor: reserveCache.reserveFactor,
-            reserve: reserveAddress,
-            aToken: reserveCache.aTokenAddress,
-            reserveId: reserve.id
-          })
-        );
+    uint256 totalDebt = TokenLogic.totalSupplyStableDebt(
+      reserveCache.id
+    ) + TokenLogic.totalSupplyVariableDebt(reserveCache.id);
+    (uint256 liquidityRateVariableDebtOnly, , ) = InterestRateLogic
+      .calculateInterestRates(
+        DataTypes.CalculateInterestRatesParams({
+          unbacked: reserve.unbacked,
+          liquidityAdded: 0,
+          liquidityTaken: 0,
+          totalStableDebt: 0,
+          totalVariableDebt: totalDebt,
+          averageStableBorrowRate: 0,
+          reserveFactor: reserveCache.reserveFactor,
+          reserve: reserveAddress,
+          reserveId: reserve.id
+        })
+      );
 
     require(
       reserveCache.currLiquidityRate <=
@@ -759,15 +762,15 @@ library ValidationLogic {
       Errors.ASSET_NOT_LISTED
     );
     require(
-      IERC20(reserve.stableDebtTokenAddress).totalSupply() == 0,
+      TokenLogic.totalSupplyStableDebt(reserve.id) == 0,
       Errors.STABLE_DEBT_NOT_ZERO
     );
     require(
-      IERC20(reserve.variableDebtTokenAddress).totalSupply() == 0,
+      TokenLogic.totalSupplyVariableDebt(reserve.id) == 0,
       Errors.VARIABLE_DEBT_SUPPLY_NOT_ZERO
     );
     require(
-      IERC20(reserve.aTokenAddress).totalSupply() == 0,
+      TokenLogic.totalSupplyAToken(reserve.id) == 0,
       Errors.ATOKEN_SUPPLY_NOT_ZERO
     );
   }

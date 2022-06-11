@@ -35,6 +35,7 @@ library LibStorage {
     uint64 maxStableRateBorrowSizePercent;
     // Maximum number of active reserves there have been in the protocol. It is the upper bound of the reserves list
     uint16 reservesCount;
+    address treasury;
   }
 
   struct InterestRateStorage {
@@ -67,7 +68,6 @@ library LibStorage {
     // Stable debt specific
     mapping(uint256 => mapping(address => uint40)) stableDebtTimestamps;
     mapping(uint256 => uint128) avgStableRate;
-    // Timestamp of the last update of the total supply
     mapping(uint256 => uint40) stableDebtTotalSupplyTimestamp;
   }
 

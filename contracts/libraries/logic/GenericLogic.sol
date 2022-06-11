@@ -12,6 +12,7 @@ import { DataTypes } from "@types/DataTypes.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { EModeLogic } from "@logic/EModeLogic.sol";
 import { OracleLogic } from "@logic/OracleLogic.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 
 /**
  * @title GenericLogic library
@@ -39,6 +40,14 @@ library GenericLogic {
     returns (LibStorage.OracleStorage storage)
   {
     return LibStorage.oracleStorage();
+  }
+
+  function ts()
+    internal
+    pure
+    returns (LibStorage.TokenStorage storage)
+  {
+    return LibStorage.tokenStorage();
   }
 
   struct CalculateUserAccountDataVars {
@@ -262,9 +271,9 @@ library GenericLogic {
     uint256 assetUnit
   ) private view returns (uint256) {
     // fetching variable debt
-    uint256 userTotalDebt = IScaledBalanceToken(
-      reserve.variableDebtTokenAddress
-    ).scaledBalanceOf(user);
+    uint256 userTotalDebt = ts()
+    .variableDebtBalances[reserve.id][user].balance;
+
     if (userTotalDebt != 0) {
       userTotalDebt = userTotalDebt.rayMul(
         reserve.getNormalizedDebt()
@@ -273,7 +282,7 @@ library GenericLogic {
 
     userTotalDebt =
       userTotalDebt +
-      IERC20(reserve.stableDebtTokenAddress).balanceOf(user);
+      TokenLogic.balanceOfStableDebt(reserve.id, user);
 
     userTotalDebt = assetPrice * userTotalDebt;
 
@@ -300,9 +309,9 @@ library GenericLogic {
   ) private view returns (uint256) {
     uint256 normalizedIncome = reserve.getNormalizedIncome();
     uint256 balance = (
-      IScaledBalanceToken(reserve.aTokenAddress)
-        .scaledBalanceOf(user)
-        .rayMul(normalizedIncome)
+      uint256(ts().aTokenBalances[reserve.id][user].balance).rayMul(
+        normalizedIncome
+      )
     ) * assetPrice;
 
     unchecked {

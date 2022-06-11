@@ -3,8 +3,10 @@ pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
 import { DataTypes } from "@types/DataTypes.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
 import { PercentageMath } from "@math/PercentageMath.sol";
 import { WadRayMath } from "@math/WadRayMath.sol";
+import { Errors } from "@helpers/Errors.sol";
 import { IERC20 } from "@interfaces/IERC20.sol";
 
 library InterestRateLogic {
@@ -29,6 +31,38 @@ library InterestRateLogic {
     returns (LibStorage.InterestRateStorage storage)
   {
     return LibStorage.interestRateStorage();
+  }
+
+  function initializeReserveStrategy(
+    uint256 _reserveId,
+    DataTypes.InitInterestRateParams memory params
+  ) internal {
+    require(
+      WadRayMath.RAY >= params.optimalUsageRatio,
+      Errors.INVALID_OPTIMAL_USAGE_RATIO
+    );
+    require(
+      WadRayMath.RAY >= params.optimalStableToTotalDebtRatio,
+      Errors.INVALID_OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO
+    );
+    DataTypes.InterestRateStrategy storage irs_ = irs()
+      .interestRateStrategies[_reserveId];
+    irs_.OPTIMAL_USAGE_RATIO = params.optimalUsageRatio;
+    irs_.MAX_EXCESS_USAGE_RATIO =
+      WadRayMath.RAY -
+      params.optimalUsageRatio;
+    irs_.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO = params
+      .optimalStableToTotalDebtRatio;
+    irs_.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO =
+      WadRayMath.RAY -
+      params.optimalStableToTotalDebtRatio;
+    irs_.baseVariableBorrowRate = params.baseVariableBorrowRate;
+    irs_.variableRateSlope1 = params.variableRateSlope1;
+    irs_.variableRateSlope2 = params.variableRateSlope2;
+    irs_.stableRateSlope1 = params.stableRateSlope1;
+    irs_.stableRateSlope2 = params.stableRateSlope2;
+    irs_.baseStableRateOffset = params.baseStableRateOffset;
+    irs_.stableRateExcessOffset = params.stableRateExcessOffset;
   }
 
   function calculateInterestRates(
@@ -61,7 +95,7 @@ library InterestRateLogic {
         vars.totalDebt
       );
       vars.availableLiquidity =
-        IERC20(params.reserve).balanceOf(params.aToken) +
+        IERC20(params.reserve).balanceOf(address(this)) +
         params.liquidityAdded -
         params.liquidityTaken;
 
