@@ -2,12 +2,18 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
+
 import { IERC20 } from "@interfaces/IERC20.sol";
+
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
+
 import { PercentageMath } from "@math/PercentageMath.sol";
 import { WadRayMath } from "@math/WadRayMath.sol";
+
 import { Helpers } from "@helpers/Helpers.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
+
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { GenericLogic } from "@logic/GenericLogic.sol";
@@ -15,11 +21,10 @@ import { IsolationModeLogic } from "@logic/IsolationModeLogic.sol";
 import { OracleLogic } from "@logic/OracleLogic.sol";
 import { EModeLogic } from "@logic/EModeLogic.sol";
 import { MetaLogic } from "@logic/MetaLogic.sol";
+import { TokenLogic } from "@logic/TokenLogic.sol";
+
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
-import { IAToken } from "@interfaces/IAToken.sol";
-import { IStableDebtToken } from "@interfaces/IStableDebtToken.sol";
-import { IVariableDebtToken } from "@interfaces/IVariableDebtToken.sol";
 
 /**
  * @title LiquidationLogic library
@@ -98,7 +103,6 @@ library LiquidationLogic {
     uint256 liquidationProtocolFeeAmount;
     address collateralPriceSource;
     address debtPriceSource;
-    IAToken collateralAToken;
     DataTypes.ReserveCache debtReserveCache;
   }
 
@@ -156,16 +160,15 @@ library LiquidationLogic {
     );
 
     (
-      vars.collateralAToken,
       vars.collateralPriceSource,
       vars.debtPriceSource,
       vars.liquidationBonus
     ) = _getConfigurationData(collateralReserve, params);
 
-    vars.userCollateralBalance = vars.collateralAToken.balanceOf(
+    vars.userCollateralBalance = TokenLogic.balanceOfAToken(
+      collateralReserve.id,
       params.user
     );
-
     (
       vars.actualCollateralToLiquidate,
       vars.actualDebtToLiquidate,
@@ -207,9 +210,10 @@ library LiquidationLogic {
 
     // Transfer fee to treasury if it is non-zero
     if (vars.liquidationProtocolFeeAmount != 0) {
-      vars.collateralAToken.transferOnLiquidation(
+      TokenLogic.aTokenTransferFrom(
         params.user,
-        vars.collateralAToken.RESERVE_TREASURY_ADDRESS(),
+        ps().treasury,
+        collateralReserve.id,
         vars.liquidationProtocolFeeAmount
       );
     }
@@ -272,9 +276,10 @@ library LiquidationLogic {
     );
 
     // Burn the equivalent amount of aToken, sending the underlying to the liquidator
-    vars.collateralAToken.burn(
+    TokenLogic.aTokenBurn(
       params.user,
       msgSender(),
+      collateralReserveCache.id,
       vars.actualCollateralToLiquidate,
       collateralReserveCache.nextLiquidityIndex
     );
@@ -293,12 +298,12 @@ library LiquidationLogic {
     DataTypes.ExecuteLiquidationCallParams memory params,
     LiquidationCallLocalVars memory vars
   ) internal {
-    uint256 liquidatorPreviousATokenBalance = IERC20(
-      vars.collateralAToken
-    ).balanceOf(msgSender());
-    vars.collateralAToken.transferOnLiquidation(
+    uint256 liquidatorPreviousATokenBalance = TokenLogic
+      .balanceOfAToken(collateralReserve.id, msgSender());
+    TokenLogic.aTokenTransferFrom(
       params.user,
       msgSender(),
+      collateralReserve.id,
       vars.actualCollateralToLiquidate
     );
 
@@ -334,24 +339,20 @@ library LiquidationLogic {
     LiquidationCallLocalVars memory vars
   ) internal {
     if (vars.userVariableDebt >= vars.actualDebtToLiquidate) {
-      vars
-        .debtReserveCache
-        .nextScaledVariableDebt = IVariableDebtToken(
-        vars.debtReserveCache.variableDebtTokenAddress
-      ).burn(
+      vars.debtReserveCache.nextScaledVariableDebt = TokenLogic
+        .variableDebtTokenBurn(
           params.user,
+          ps().reserves[params.debtAsset].id,
           vars.actualDebtToLiquidate,
           vars.debtReserveCache.nextVariableBorrowIndex
         );
     } else {
       // If the user doesn't have variable debt, no need to try to burn variable debt tokens
       if (vars.userVariableDebt != 0) {
-        vars
-          .debtReserveCache
-          .nextScaledVariableDebt = IVariableDebtToken(
-          vars.debtReserveCache.variableDebtTokenAddress
-        ).burn(
+        vars.debtReserveCache.nextScaledVariableDebt = TokenLogic
+          .variableDebtTokenBurn(
             params.user,
+            ps().reserves[params.debtAsset].id,
             vars.userVariableDebt,
             vars.debtReserveCache.nextVariableBorrowIndex
           );
@@ -359,12 +360,11 @@ library LiquidationLogic {
       (
         vars.debtReserveCache.nextTotalStableDebt,
         vars.debtReserveCache.nextAvgStableBorrowRate
-      ) = IStableDebtToken(
-        vars.debtReserveCache.stableDebtTokenAddress
-      ).burn(
-          params.user,
-          vars.actualDebtToLiquidate - vars.userVariableDebt
-        );
+      ) = TokenLogic.stableDebtTokenBurn(
+        params.user,
+        ps().reserves[params.debtAsset].id,
+        vars.actualDebtToLiquidate - vars.userVariableDebt
+      );
     }
   }
 
@@ -417,7 +417,6 @@ library LiquidationLogic {
    * @notice Returns the configuration data for the debt and the collateral reserves.
    * @param collateralReserve The data of the collateral reserve
    * @param params The additional parameters needed to execute the liquidation function
-   * @return The collateral aToken
    * @return The address to use as price source for the collateral
    * @return The address to use as price source for the debt
    * @return The liquidation bonus to apply to the collateral
@@ -429,15 +428,11 @@ library LiquidationLogic {
     internal
     view
     returns (
-      IAToken,
       address,
       address,
       uint256
     )
   {
-    IAToken collateralAToken = IAToken(
-      collateralReserve.aTokenAddress
-    );
     uint256 liquidationBonus = collateralReserve
       .configuration
       .getLiquidationBonus();
@@ -458,12 +453,7 @@ library LiquidationLogic {
       }
     }
 
-    return (
-      collateralAToken,
-      collateralPriceSource,
-      debtPriceSource,
-      liquidationBonus
-    );
+    return (collateralPriceSource, debtPriceSource, liquidationBonus);
   }
 
   struct AvailableCollateralToLiquidateLocalVars {
