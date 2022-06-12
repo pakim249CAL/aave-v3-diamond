@@ -2,17 +2,23 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
+
 import { MetaLogic } from "@logic/MetaLogic.sol";
 import { SupplyLogic } from "@logic/SupplyLogic.sol";
 import { PoolLogic } from "@logic/PoolLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
+
 import { Errors } from "@helpers/Errors.sol";
+
 import { WadRayMath } from "@math/WadRayMath.sol";
 import { MathUtils } from "@math/MathUtils.sol";
-import { SafeCast } from "@dependencies/SafeCast.sol";
-import { IERC20 } from "@interfaces/IERC20.sol";
+
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
+import { SafeCast } from "@dependencies/SafeCast.sol";
+
+import { IERC20 } from "@interfaces/IERC20.sol";
 
 /// @title ERC1155 Non-Compliant
 /// @dev ERC1155 multi-token architecture is desired but external calls and hooks are too much to keep track of for me for re-entry reasons, so they are removed.

@@ -10,3 +10,5 @@
 @configuration/=contracts/libraries/configuration/
 @math/=contracts/libraries/math/
 @abstract/=contracts/abstract/
+@facets/=contracts/facets/
+@init/=contracts/init/

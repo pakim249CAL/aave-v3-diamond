@@ -2,27 +2,30 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
-import { IERC20 } from "@interfaces/IERC20.sol";
+
 import { Address } from "@dependencies/Address.sol";
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
+import { SafeCast } from "@dependencies/SafeCast.sol";
+
+import { IERC20 } from "@interfaces/IERC20.sol";
 import { IReserveInterestRateStrategy } from "@interfaces/IReserveInterestRateStrategy.sol";
-import { IStableDebtToken } from "@interfaces/IStableDebtToken.sol";
-import { IScaledBalanceToken } from "@interfaces/IScaledBalanceToken.sol";
-import { IAToken } from "@interfaces/IAToken.sol";
-import { IPriceOracleSentinel } from "@interfaces/IPriceOracleSentinel.sol";
+
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
+
 import { Errors } from "@helpers/Errors.sol";
+
 import { WadRayMath } from "@math/WadRayMath.sol";
 import { PercentageMath } from "@math/PercentageMath.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
+
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { GenericLogic } from "@logic/GenericLogic.sol";
 import { TokenLogic } from "@logic/TokenLogic.sol";
 import { OracleLogic } from "@logic/OracleLogic.sol";
 import { MetaLogic } from "@logic/MetaLogic.sol";
 import { InterestRateLogic } from "@logic/InterestRateLogic.sol";
-import { SafeCast } from "@dependencies/SafeCast.sol";
 
 /**
  * @title ReserveLogic library

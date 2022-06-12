@@ -2,7 +2,9 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
+
 import { EIP712Logic } from "@logic/EIP712Logic.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
 
 library MetaLogic {

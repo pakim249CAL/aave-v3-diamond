@@ -12,8 +12,6 @@ import { TokenLogic } from "@logic/TokenLogic.sol";
 import { DataTypes } from "@types/DataTypes.sol";
 import { IERC20Permit } from "@interfaces/IERC20Permit.sol";
 import { IERC20Detailed } from "@interfaces/IERC20Detailed.sol";
-import { IStableDebtToken } from "@interfaces/IStableDebtToken.sol";
-import { IVariableDebtToken } from "@interfaces/IVariableDebtToken.sol";
 import { WadRayMath } from "@math/WadRayMath.sol";
 
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";

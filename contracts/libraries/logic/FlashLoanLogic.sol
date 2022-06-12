@@ -2,19 +2,24 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
+
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
 import { SafeCast } from "@dependencies/SafeCast.sol";
+
 import { IERC20 } from "@interfaces/IERC20.sol";
-import { IAToken } from "@interfaces/IAToken.sol";
 import { IFlashLoanReceiver } from "@interfaces/IFlashLoanReceiver.sol";
 import { IFlashLoanSimpleReceiver } from "@interfaces/IFlashLoanSimpleReceiver.sol";
 
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
+
 import { Errors } from "@helpers/Errors.sol";
+
 import { WadRayMath } from "@math/WadRayMath.sol";
 import { PercentageMath } from "@math/PercentageMath.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
+
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { BorrowLogic } from "@logic/BorrowLogic.sol";
 import { ReserveLogic } from "@logic/ReserveLogic.sol";

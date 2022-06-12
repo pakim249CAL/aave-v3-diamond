@@ -2,7 +2,9 @@ pragma solidity 0.8.14;
 
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
+
 import { IPriceOracleGetter } from "@interfaces/IPriceOracleGetter.sol";
 import { AggregatorInterface } from "@interfaces/AggregatorInterface.sol";
 import { ISequencerOracle } from "@interfaces/ISequencerOracle.sol";

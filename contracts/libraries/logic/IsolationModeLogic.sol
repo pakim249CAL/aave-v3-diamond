@@ -2,9 +2,12 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
+
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
 import { UserConfiguration } from "@configuration/UserConfiguration.sol";
+
 import { SafeCast } from "@dependencies/SafeCast.sol";
 
 /**

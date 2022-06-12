@@ -2,13 +2,20 @@
 pragma solidity 0.8.14;
 
 import { LibStorage } from "@storage/LibStorage.sol";
+
 import { GPv2SafeERC20 } from "@dependencies/GPv2SafeERC20.sol";
 import { Address } from "@dependencies/Address.sol";
+
 import { IERC20 } from "@interfaces/IERC20.sol";
+
 import { ReserveConfiguration } from "@configuration/ReserveConfiguration.sol";
+
 import { Errors } from "@helpers/Errors.sol";
+
 import { WadRayMath } from "@math/WadRayMath.sol";
+
 import { DataTypes } from "@types/DataTypes.sol";
+
 import { ReserveLogic } from "@logic/ReserveLogic.sol";
 import { ValidationLogic } from "@logic/ValidationLogic.sol";
 import { GenericLogic } from "@logic/GenericLogic.sol";
@@ -45,34 +52,31 @@ library PoolLogic {
 
   /**
    * @notice Initialize an asset reserve and add the reserve to the list of reserves
-   * @param params Additional parameters needed for initiation
-   * @return true if appended, false if inserted at existing empty spot
    **/
-  function executeInitReserve(
-    DataTypes.InitReserveParams memory params
-  ) internal returns (bool) {
-    require(Address.isContract(params.asset), Errors.NOT_CONTRACT);
-    ps().reserves[params.asset].init();
+  function executeInitReserve(address _asset) internal {
+    require(Address.isContract(_asset), Errors.NOT_CONTRACT);
+    uint16 reservesCount = ps().reservesCount;
+    ps().reserves[_asset].init();
 
-    bool reserveAlreadyAdded = ps().reserves[params.asset].id != 0 ||
-      ps().reservesList[0] == params.asset;
+    bool reserveAlreadyAdded = ps().reserves[_asset].id != 0 ||
+      ps().reservesList[0] == _asset;
     require(!reserveAlreadyAdded, Errors.RESERVE_ALREADY_ADDED);
 
-    for (uint16 i = 0; i < params.reservesCount; i++) {
+    for (uint16 i = 0; i < reservesCount; i++) {
       if (ps().reservesList[i] == address(0)) {
-        ps().reserves[params.asset].id = i;
-        ps().reservesList[i] = params.asset;
-        return false;
+        ps().reserves[_asset].id = i;
+        ps().reservesList[i] = _asset;
+        return;
       }
     }
 
     require(
-      params.reservesCount < params.maxNumberReserves,
+      reservesCount < ReserveConfiguration.MAX_RESERVES_COUNT,
       Errors.NO_MORE_RESERVES_ALLOWED
     );
-    ps().reserves[params.asset].id = params.reservesCount;
-    ps().reservesList[params.reservesCount] = params.asset;
-    return true;
+    ps().reserves[_asset].id = reservesCount;
+    ps().reservesList[reservesCount] = _asset;
+    ps().reservesCount++;
   }
 
   /**
