@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.14;
 
 import "forge-std/Script.sol";
 
@@ -29,7 +29,10 @@ contract DeploymentScript is Script {
     address initMarket = address(new InitMarket());
 
     address diamond = address(
-      new Diamond(address(this), functionSelectorEntry)
+      new Diamond(
+        0x8FEebfA4aC7AF314d90a0c17C3F91C800cFdE44B,
+        functionSelectorEntry
+      )
     );
 
     FunctionSelectorEntry(diamond).arbitraryDelegateCall(

@@ -150,11 +150,6 @@ library ReserveLogic {
    * @param reserve The reserve object
    **/
   function init(DataTypes.ReserveData storage reserve) internal {
-    require(
-      reserve.liquidityIndex > 0,
-      Errors.RESERVE_ALREADY_INITIALIZED
-    );
-
     reserve.liquidityIndex = uint128(WadRayMath.RAY);
     reserve.variableBorrowIndex = uint128(WadRayMath.RAY);
   }

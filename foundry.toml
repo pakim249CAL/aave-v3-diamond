@@ -1,0 +1,22 @@
+[default]
+src = 'src'
+out = 'out'
+libs = ['lib']
+remappings = [
+    '@abstract/=contracts/abstract/',
+    '@configuration/=contracts/libraries/configuration/',
+    '@contracts/=contracts/',
+    '@dependencies/=contracts/libraries/dependencies/',
+    '@diamond/=contracts/diamond/',
+    '@facets/=contracts/facets/',
+    '@helpers/=contracts/libraries/helpers/',
+    '@init/=contracts/init/',
+    '@interfaces/=contracts/interfaces/',
+    '@libraries/=contracts/libraries/',
+    '@logic/=contracts/libraries/logic/',
+    '@math/=contracts/libraries/math/',
+    '@storage/=contracts/libraries/storage/',
+    '@types/=contracts/libraries/types/',
+]
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config

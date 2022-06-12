@@ -386,7 +386,7 @@ contract InitMarket is Modifiers {
   }
 
   function lensSelectors() internal pure returns (bytes4[] memory) {
-    bytes4[] memory functionSelectors = new bytes4[](27);
+    bytes4[] memory functionSelectors = new bytes4[](37);
     uint256 i;
     {
       functionSelectors[i++] = Lens.getReserveData.selector;
